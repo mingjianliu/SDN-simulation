@@ -82,14 +82,6 @@ auto uni_generation = std::bind(generation,generator);
 auto uni_dis = std::bind(uniform_dis,generator);
 
 
-/////////////////////function here//////////////
-
-int myPow(int x, int p) {
-  if (p == 0) return 1;
-  if (p == 1) return x;
-  return x * myPow(x, p-1);
-}
-
 void trafficdemand(){
     FILE *file;
     
@@ -416,30 +408,27 @@ void path_request1(int policy, int dst) {
 
 /*------------------new objective function--------------------*/
 int path_firsthop(int number){
-    int number1;
-    for(int i=1;myPow(2,i)<number;++i)
+
+    for(int i=1;pow(2,i)<number;++i)
     {
-	if ((number%(myPow(2,i))-number%(myPow(2,(i-1)))))
+	if (!(number%(pow(2,i))-number%(pow(2,i-1))))
         {return i;}
-        number1=i;
     }
-    return number1;
+    return i;
 }
 
 double path_cost1(double average, int length, int number)
 {
     double cost=0.0;
-    int temp=0;
-    int tempnumber;
-    for(int i=1;i<=length;++i){
-	tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
-               
-
+    int temp=0,tempnumber;
+    for(int i=0;i<length;++i){
+	tempnumber=number%(pow(2.0,i))-number%(pow(2.0,i-1));  //Get the bit in ith hop
+       
 	if(tempnumber)
 	{temp++;}
 	else{temp=0;}   //Count the consecutive '0's
 
-        //if(temp==HOPS){return 9999.99;}   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
+        if(temp==HOPS){return 9999.99;}   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
         
         if(temppath[i]>average)
         {cost+=2;}
@@ -453,25 +442,15 @@ void path_request2(int policy, int dst)
 //the objective function 1
     
     int length=0;
-    int temp_position=dst;
-    temppath[0]=dst;
+    int temp_position=temppath[0]=dst;
     int src=position;
     int hops;
-    double average,cost=9999.99,temp_cost=9999.99;
-    
-    for(int i=0; i<MAX_NODE; i++) {
-        temppath[i]=-1;
+    double average,cost=9999,temp_cost;
+    for(int i=1;temp_position!=src;++i)  //get the whole path in temppath[i]
+    {
+		temppath[i]=shortestpath[policy][src][temp_position];
+                ++length;
     }
-    
-    for(int i=1; i<MAX_NODE; i++) {
-        temppath[i]=shortestpath[policy][src][dst];
-        if (shortestpath[policy][src][dst]==position) {
-            length=i;
-            break;
-        }
-        dst=temppath[i];
-    }
-
 
     for(int i=0;i<=length;++i)   //substitute all nodes with their TCAM entry number
     { 
@@ -481,24 +460,25 @@ void path_request2(int policy, int dst)
 
     average/=(length+1);
 
-    for(int i=0;i<myPow(2,length);++i)
+    for(int i=0;i<pow(2,length);++i)
     {
     	temp_cost=path_cost1(average,length,i);
-    	if(cost>temp_cost)   //here we start the array from destination to the next switch to source switch
+    	if(cost<temp_cost)   //here we start the array from destination to the next switch to source switch
     	{
 		cost=temp_cost;
 		hops=path_firsthop(i);	        
 	}        
     }
 
-
+    /*here assign the tag information into tmp_tag*/
     tmp_tag.clear();
-    for(int i=0; (length-i)>0; i++) {
-        arrayh[i]=temppath[length-1-i];
+    for(int i=1; i<=hops; ++i) {
+        arrayh[i]=temppath[length-i];
     }
     tmp_tag.assign(arrayh, arrayh+ hops);
-   
 }
+
+
 
 
 

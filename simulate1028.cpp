@@ -12,16 +12,14 @@
 #include <functional>
 #include <cmath>
 
-
 using namespace std;
-//using namespace std::placeholders;
 #define MAX_NODE 1000
 #define MAX_NUM  1000
 #define MULTIPLE 10
 #define HOPS     3
 #define MAX_ENTRY 1000
 #define MEAN     10
-#define DURATIONTIME 8
+#define DURATIONTIME 200
 
 int selecthops;
 int arrayh[MAX_NODE];
@@ -70,7 +68,6 @@ int flowtime=0;
 
 int demand[10000][2];
 int destroyed = 0;
-int temppath[MAX_NODE];
 ////////////////////////////////////////////////
 
 default_random_engine generator(time(NULL));
@@ -78,21 +75,22 @@ default_random_engine generator(time(NULL));
 uniform_int_distribution<int> uniform_dis(0,DURATIONTIME);
 uniform_int_distribution<int> generation(1,10);
 
-auto uni_generation = std::bind(generation,generator);
-auto uni_dis = std::bind(uniform_dis,generator);
+auto uni_generation = bind(generation,generator);
+auto uni_dis = bind(uniform_dis,generator);
 
-
-/////////////////////function here//////////////
+int temppath[MAX_NODE];
+int tempUsage[MAX_NODE];
+/////////////////////////////////////////////////
 
 int myPow(int x, int p) {
-  if (p == 0) return 1;
-  if (p == 1) return x;
-  return x * myPow(x, p-1);
+    if (p == 0) return 1;
+    if (p == 1) return x;
+    return x * myPow(x, p-1);
 }
 
-void trafficdemand(){
+void trafficdemand() {
     FILE *file;
-    
+
     /*read and skip the second line*/
     file=fopen("trafficdemand1.txt","r");
     if(file==NULL)
@@ -103,8 +101,8 @@ void trafficdemand(){
     else
     {
         /*initialize traffic matrix*/
-        
-        
+
+
         /*input path cost raw data*/
         char ch=getc(file);
         int x,y,n,count=0;
@@ -129,7 +127,7 @@ void trafficdemand(){
                     ch=getc(file);
                     n++;
                 }
-                
+
                 x=atoi(str);
                 demand[count][0]=x;
                 //cout<<"the source is "<<x;
@@ -142,7 +140,7 @@ void trafficdemand(){
                     ch=getc(file);
                     n++;
                 }
-                
+
                 y=atoi(str);
                 demand[count][1]=y;
                 //cout<<" and the destination is "<<y<<endl;
@@ -153,9 +151,9 @@ void trafficdemand(){
             }
         }
     }
-    
+
     fclose(file);
-    
+
 }
 
 
@@ -384,7 +382,7 @@ void path_statistic(int policy, int number)
 void path_request1(int policy, int dst) {
     int  temp[MAX_NODE];
     int  label;
-    
+
     //switch_data[position].cnt++;
     for(int i=0; i<MAX_NODE; i++) {
         temp[i]=-1;
@@ -409,21 +407,63 @@ void path_request1(int policy, int dst) {
         //cout<<"label is "<<temp[i]<<endl;
     }
     tmp_tag.assign(arrayh, arrayh+ HOPS);
-    
+
 }
 
-
-
 /*------------------new objective function--------------------*/
-int path_firsthop(int number){
+int path_firsthop(int number,int length) {
     int number1;
-    for(int i=1;myPow(2,i)<number;++i)
+    for(int i=length; i>0; --i)
     {
-	if ((number%(myPow(2,i))-number%(myPow(2,(i-1)))))
-        {return i;}
+        if ((number%(myPow(2,i))-number%(myPow(2,(i-1)))))
+        {
+            return i;
+        }
         number1=i;
     }
     return number1;
+}
+
+double path_cost2(double average, int length, int number)
+{
+    double cost=0.0;
+    int temp=0;
+    int tempnumber;
+    int temp_count;
+    for(int i=1; i<=length; ++i) {
+        tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
+
+        temp_count=switch_data[temppath[i]].cnt;
+
+        if(tempnumber)
+        {
+            temp++;
+            if(temp>=HOPS) {
+                return 9999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
+            }
+        }
+        else
+        {
+            temp=0;
+            if(temp_count<333)
+            {
+                cost+=0.01*temp_count;
+            }
+            else if(temp_count<666)
+            {
+                cost+=0.03*temp_count;
+            }
+            else if(temp_count<900)
+            {
+                cost+=0.1*temp_count;
+            }
+            else {
+                cost+=0.7*temp_count;
+            }
+        }   //Count the consecutive '0's
+
+    }
+    return cost;
 }
 
 double path_cost1(double average, int length, int number)
@@ -431,38 +471,45 @@ double path_cost1(double average, int length, int number)
     double cost=0.0;
     int temp=0;
     int tempnumber;
-    for(int i=1;i<=length;++i){
-	tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
-               
+    for(int i=1; i<=length; ++i) {
+        tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
 
-	if(tempnumber)
-	{temp++;}
-	else{temp=0;}   //Count the consecutive '0's
 
-        //if(temp==HOPS){return 9999.99;}   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
-        
-        if(temppath[i]>average)
-        {cost+=2;}
+        if(tempnumber)
+        {
+            temp++;
+            if(temppath[i]>average)
+            {
+                cost+=2;
+            }
+        }
+        else {
+            temp=0;
+            if(temp>=HOPS) {
+                return 9999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
+            }
+            cost+=0.4;
+        }   //Count the consecutive '0's
     }
     return cost;
 }
 
-
-void path_request2(int policy, int dst) 
-{  
+void path_request2(int policy, int dst)
+{
 //the objective function 1
-    
+
     int length=0;
     int temp_position=dst;
-    temppath[0]=dst;
     int src=position;
     int hops;
     double average,cost=9999.99,temp_cost=9999.99;
-    
+
     for(int i=0; i<MAX_NODE; i++) {
         temppath[i]=-1;
     }
-    
+
+    temppath[0]=dst;
+
     for(int i=1; i<MAX_NODE; i++) {
         temppath[i]=shortestpath[policy][src][dst];
         if (shortestpath[policy][src][dst]==position) {
@@ -473,35 +520,87 @@ void path_request2(int policy, int dst)
     }
 
 
-    for(int i=0;i<=length;++i)   //substitute all nodes with their TCAM entry number
-    { 
-    		temppath[i]= switch_data[temppath[i]].cnt;
-                average+=temppath[i];
+    for(int i=0; i<=length; ++i) //substitute all nodes with their TCAM entry number
+    {
+        average+=switch_data[temppath[i]].cnt;
     }
 
     average/=(length+1);
 
-    for(int i=0;i<myPow(2,length);++i)
+    for(int i=0; i<myPow(2,length); ++i)
     {
-    	temp_cost=path_cost1(average,length,i);
-    	if(cost>temp_cost)   //here we start the array from destination to the next switch to source switch
-    	{
-		cost=temp_cost;
-		hops=path_firsthop(i);	        
-	}        
+        temp_cost=path_cost1(average,length,i);
+        if(cost>temp_cost)   //here we start the array from destination to the next switch to source switch
+        {
+            cost=temp_cost;
+            hops=path_firsthop(i,length);
+        }
     }
-
 
     tmp_tag.clear();
     for(int i=0; (length-i)>0; i++) {
         arrayh[i]=temppath[length-1-i];
     }
     tmp_tag.assign(arrayh, arrayh+ hops);
-   
+
 }
 
 
-
+void path_request4(int policy, int dst) {
+    int temp[MAX_NODE];
+    int label;
+//switch_data[position].cnt++;
+    for(int i=0; i<MAX_NODE; i++) {
+        temp[i]=-1;
+    }
+//vector<int> tcam_hops;
+    temp[0]=dst;
+    int src=position;
+    for(int i=1; i<MAX_NODE; i++) {
+        temp[i]=shortestpath[policy][src][dst];
+        if (shortestpath[policy][src][dst]==position) {
+            label=i;/*should be substituted by pathlength[src][dst]*/
+//cout<<"here is the label "<<label<<endl;
+            break;
+        }
+        dst=temp [i];
+//cout<<"now src is "<<src<<endl;
+//cout<<i+1<<"th output switch "<<temp[i]<<endl;
+    }
+    tmp_tag.clear();
+    for(int i=0; (label-i)>0; i++) {
+        arrayh[i]=temp[label-1-i];
+//cout<<"label is "<<temp[i]<<endl;
+    }
+    int hops, counts;/*the enhanced load balance algorithm*/
+    if(label%HOPS) {
+        hops=label/HOPS+1;
+        counts=HOPS-(label%HOPS);
+    }
+    else {
+        hops=label/HOPS;
+        counts=0;
+    }
+    int compare_1=findpath(label,counts,0,label);
+    int tempnumber1=selecthops;
+    int compare_2=findpath(label,counts+HOPS,0,label);
+    int tempnumber2=selecthops;
+    int compare_3=findpath(label,counts+(HOPS*2),0,label);
+    int tempnumber3=selecthops;
+    if (compare_1<=compare_2) {
+        selecthops=tempnumber1;
+    }
+    else if (compare_2<=compare_3) {
+        selecthops=tempnumber2;
+    }
+    else {
+        selecthops=tempnumber3;
+    }
+    if(selecthops<HOPS) {
+        testnumber++;
+    }
+    tmp_tag.assign(arrayh, arrayh+ selecthops);
+}
 
 void entry_destroy(int time,int numberofnodes)
 {
@@ -525,7 +624,9 @@ void entry_destroy(int time,int numberofnodes)
 void tcam_lookup(int dst,int endtime)
 {
     if(switch_data[position].cnt>=MAX_ENTRY) {
-        if (refused==0){recordflow=endtime;}
+        if (refused==0) {
+            recordflow=endtime;
+        }
         refused++;
         tmp_tag.clear();
         position=temp_flow.dst;
@@ -535,7 +636,7 @@ void tcam_lookup(int dst,int endtime)
         switch_data[position].cnt++;
         switch_data[position].end_time.push_back(endtime);
     }
-    
+
     if ((switch_data[position].table_entry).find(dst) == (switch_data[position].table_entry).end())
     {
         path_request2(0,dst);
@@ -546,9 +647,9 @@ void tcam_lookup(int dst,int endtime)
     else {
         path_request2(0,dst);
         (switch_data[position].table_entry)[dst] = tmp_tag;
-        
+
     }
-    
+
     return;
 }
 
@@ -579,7 +680,7 @@ void express_handle(int dst,int endtime)
     }
 }
 
-int poisson_dis(float criteria){
+int poisson_dis(float criteria) {
     float temp = float(uni_generation());
     if (temp/10.0 < criteria) {
         return 1;
@@ -588,23 +689,25 @@ int poisson_dis(float criteria){
         return 0;
 }
 
-void rand_generation(int flownumber,int numberofnodes,float criteria_generate){
-    
+
+
+void rand_generation(int flownumber,int numberofnodes,float criteria_generate) {
+
 //    int cnt = 0;
-//    
+//
 //    for (int i = 0; i < flownumber; i++) {
 //        vector <int> flow_in;
-//        
+//
 //        int flow_src = uni_dis();
 //        int flow_dst = uni_dis();
 //        int flow_duration = poisson_dis();
-//        
+//
 //        int flow_arrival = poisson_dis();
-//        
+//
 //        flow_in.push_back(flow_src);
 //        flow_in.push_back(flow_dst);
 //        flow_in.push_back(flow_duration + flow_arrival);
-//        
+//
 //        flow_setup.insert(make_pair(flow_arrival,flow_in));
 //        //cout<<"key "<<flow_arrival<<endl;
 //        flow_in.clear();
@@ -627,8 +730,8 @@ void rand_generation(int flownumber,int numberofnodes,float criteria_generate){
                 flow_in.push_back(demand[tmp_rule][0]);
                 flow_in.push_back(demand[tmp_rule][1]);
                 flow_in.push_back(time_stamp + uni_dis());
-                
-                
+
+
                 flow_setup.insert(make_pair(time_stamp,flow_in));
                 flow_in.clear();
                 flow_num++;
@@ -637,31 +740,31 @@ void rand_generation(int flownumber,int numberofnodes,float criteria_generate){
 
             }
         }
-        
+
     }
 }
 int main(int argc, char **argv
-         ) {
+        ) {
     cout<<"start to process"<<endl;
 
-    
+
     int  number;
-    int flownumber =atoi(argv[1]);
+    int flownumber = atoi(argv[1]);
     int numberofnodes=atoi(argv[2]);
     float criteria_generate = 0.5;
-    
+
     vector<vector<int>> p(1000);
     for(auto &v : p) {
         v.resize(1000,0);
     }
-    
+
     string filename="method2";
     //cout<<"Enter your file name here"<<endl;
     //cin>>filename;
     ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
 
-    
-    
+
+
     fout<<endl<<endl<<"-------------------------------------------------------------------------------"<<endl<<flownumber<<"\ttotally flow number"<<endl;
     fout<<endl;
 //----------------------------build up topology-----------------------------
@@ -683,62 +786,63 @@ int main(int argc, char **argv
 //    }
 
 //---------------------------flow handling 1013 version---------------------
-    
+
     rand_generation(flownumber,numberofnodes,criteria_generate);
-    
+
     int k= 0;
-    
+
     for (iter_multimap iter = flow_setup.begin(); iter != flow_setup.end();) {
-        
+
         //iter_multimap iter_per_entry = flow_setup.find(iter->first);
         list_size entry_num = flow_setup.count(iter->first);
-        
+
         //check switch time table
         entry_destroy(iter->first,numberofnodes);
         flowtime = iter->first;
-        
+
         for (list_size entry_cnt = 0; entry_cnt != entry_num; ++entry_cnt,++iter) {
-            
+
             //flow parameter setting up, preparing for processing per flow
             iter_vector iter_vector_per_entry = (iter->second).begin();
             temp_flow.src = *iter_vector_per_entry;
-            
+
             iter_vector_per_entry++;
             temp_flow.dst = *iter_vector_per_entry;
-            
+
             iter_vector_per_entry++;
             //int duration = *iter_vector_per_entry;
 //            cout<<dst<<endl;
 //            cout<<src<<endl;
 //            cout<<duration<<endl;
             //int arrival = iter->first;
-            
+
             temp_flow.end_time = *iter_vector_per_entry;
-            
+
             //processing per flow
             position = temp_flow.src;
             while (position != temp_flow.dst) {
                 express_handle(temp_flow.dst,temp_flow.end_time);
             }
         }
+        int unittime_flows=0;
         for (int i = 0; i<numberofnodes; i++)
         {
-            fout<<switch_data[i].cnt<<endl;
+            //fout<<switch_data[i].cnt<<endl;
             k+=switch_data[i].cnt;
-            
+            unittime_flows+=switch_data[i].cnt;
         }
-        fout<<"-------------------------------------------------------------------------------"<<endl<<k<<"\totally flow entry"<<endl;
+        fout<<"-------------------------------------------------------------------------------"<<endl<<k<<"\ttotally flow entry"<<endl;
         //cout<<test_cnt<<" testing counter"<<endl;
-        
+        fout<<"this time has totally "<<unittime_flows<<" flows"<<endl;
         fout<<"testnumber is "<<testnumber<<endl;
         fout<<"arrival time is "<<iter->first<<endl;
         fout<<"number of refused flow's is "<<refused<<endl;
-        cout<<"number of refused flow's is "<<refused<<endl;
         fout<<"refused times is "<<recordflow<<endl;
+        cout<<"number of refused flow's is "<<refused<<endl;
 
         fout<<"-------------------------------------------------------------------------------"<<endl;
-        
-        
+
+
     }
 
 
