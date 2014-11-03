@@ -89,7 +89,10 @@ auto uni_dis = bind(uniform_dis,generator);
 int temppath[MAX_NODE];
 int tempUsage[MAX_NODE];
 int k= 0;
-/////////////////////////////////////////////////
+/////////////////////add 1103//////////////////////
+int schematic;
+
+///////////////////////////////////////////////////
 
 int myPow(int x, int p) {
     if (p == 0) return 1;
@@ -97,13 +100,13 @@ int myPow(int x, int p) {
     return x * myPow(x, p-1);
 }
 
-string itos(int value){
+string itos(int value) {
     stringstream stream;
     stream<<value;
     return stream.str();
 }
 
-float average_func(int numberofnodes){
+float average_func(int numberofnodes) {
     int sum = 0;
     for (int node_id = 0; node_id < numberofnodes; node_id++) {
         sum += switch_data[node_id].cnt;
@@ -112,12 +115,12 @@ float average_func(int numberofnodes){
     return average;
 }
 
-float RMSE_func(float average, int numberofnodes){
+float RMSE_func(float average, int numberofnodes) {
     float RMSE = 0.0;
     int node_id = 0;
     while (node_id < numberofnodes) {
         RMSE += pow((float(switch_data[node_id].cnt)-average)/1000.0,2.0);
-        node_id+=1;    
+        node_id+=1;
     }
     //RMSE -= 155*(pow((0.0-average)/1000.0,2.0));
     RMSE = sqrt(RMSE/float(512.0));
@@ -443,7 +446,7 @@ void path_request1(int policy, int dst) {
 
 }
 
-/*------------------new objective function--------------------*/
+/*------------------new objective function help function, to get the first context switch's position--------------------*/
 int path_firsthop(int number,int length) {
     int number1;
     for(int i=length; i>0; --i)
@@ -457,9 +460,10 @@ int path_firsthop(int number,int length) {
     return number1;
 }
 
+//-------------------------------the new objective function-------------------------------
 double path_cost2(double average, int length, int number)
 {
-    
+
     double cost=0.0;
     int temp=0;
     int tempnumber;
@@ -491,9 +495,11 @@ double path_cost2(double average, int length, int number)
             {
                 cost+=0.1*temp_count;
             }
-            else {
+            else if(temp_count<=1000)
+            {
                 cost+=0.7*temp_count;
             }
+            else {return 9999.99;}
         }   //Count the consecutive '0's
 
     }
@@ -672,16 +678,22 @@ void tcam_lookup(int dst,int endtime)
         switch_data[position].end_time.push_back(endtime);
     }
 
-    if ((switch_data[position].table_entry).find(dst) == (switch_data[position].table_entry).end())
+    //if ((switch_data[position].table_entry).find(dst) == (switch_data[position].table_entry).end())
+    //{
+    if (schematic)
     {
         path_request1(0,dst);
-        (switch_data[position].table_entry)[dst] = tmp_tag;
     }
     else {
-        path_request1(0,dst);
-        (switch_data[position].table_entry)[dst] = tmp_tag;
-
+        path_request2(0,dst);
     }
+    (switch_data[position].table_entry)[dst] = tmp_tag;
+    //}
+    //else {
+    //    path_request1(0,dst);
+    //    (switch_data[position].table_entry)[dst] = tmp_tag;
+
+    //}
 
     return;
 }
@@ -731,40 +743,29 @@ void rand_generation(int flownumber,int numberofnodes,float criteria_generate) {
     {
         for (int tmp_rule = 0; tmp_rule < 9600; tmp_rule++)
         {
-            
-                if(poisson_dis(criteria_generate) && (flow_num < flownumber))
-                {
-                    vector <int> flow_in;
-                    flow_in.push_back(demand[tmp_rule][0]);
-                    flow_in.push_back(demand[tmp_rule][1]);
-                    flow_in.push_back(time_stamp + uni_dis());
-                    
-                    
-                    flow_setup.insert(make_pair(time_stamp,flow_in));
-                    flow_in.clear();
-                    flow_num++;
-                    //cout<<"generation completed!!"<<endl;
-                }
 
-            
+            if(poisson_dis(criteria_generate) && (flow_num < flownumber))
+            {
+                vector <int> flow_in;
+                flow_in.push_back(demand[tmp_rule][0]);
+                flow_in.push_back(demand[tmp_rule][1]);
+                flow_in.push_back(time_stamp + uni_dis());
+
+
+                flow_setup.insert(make_pair(time_stamp,flow_in));
+                flow_in.clear();
+                flow_num++;
+                //cout<<"generation completed!!"<<endl;
+            }
         }
-
     }
 }
+
 int main(int argc, char **argv
         ) {
-    cout<<"start to process"<<endl;
 
     int usage_counter[110][11];
     int counter_overflow[110];
-    
-    for (int i = 0; i < 110; i++) {
-        counter_overflow[i] = -1;
-        for (int j = 0; j < 11; j++) {
-            usage_counter[i][j] = -1;
-        }
-    }
-    
     int  number;
     int flownumber = atoi(argv[1]);
     int numberofnodes=atoi(argv[2]);
@@ -772,13 +773,24 @@ int main(int argc, char **argv
     string total_flow = itos(flownumber * loop_time);
     float criteria_generate = 0.1;
     float statistic[200][2];
+    schematic=atoi(argv[4]);
+    string string1[2];
+    string1[0]="Max_Hop_";
+    string1[1]="New_Function_";
+
+    for (int i = 0; i < 110; i++) {
+        counter_overflow[i] = -1;
+        for (int j = 0; j < 11; j++) {
+            usage_counter[i][j] = -1;
+        }
+    }
 
     vector<vector<int>> p(1000);
     for(auto &v : p) {
         v.resize(1000,0);
     }
 
-    string filename = "Case1_Max_Hop_" + total_flow + ".txt";
+    string filename = "Case1_"+string1[schematic] + total_flow + ".txt";
     //cout<<"Enter your file name here"<<endl;
     //cin>>filename;
     ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
@@ -796,9 +808,9 @@ int main(int argc, char **argv
 
 //---------------------------flow handling 1013 version---------------------
 
-for (int time = 0; time < loop_time; time++) {
-    rand_generation(flownumber,numberofnodes,criteria_generate);
-}
+    for (int time = 0; time < loop_time; time++) {
+        rand_generation(flownumber,numberofnodes,criteria_generate);
+    }
 //--------------------------processing loop per time step--------------------
     for (iter_multimap iter = flow_setup.begin(); iter != flow_setup.end();) {
 
@@ -808,7 +820,7 @@ for (int time = 0; time < loop_time; time++) {
         //check switch time table
         //entry_destroy(iter->first,numberofnodes);
         flowtime = iter->first;
-        
+
 
         for (list_size entry_cnt = 0; entry_cnt != entry_num; ++entry_cnt,++iter) {
 
@@ -830,14 +842,14 @@ for (int time = 0; time < loop_time; time++) {
             }
         }
 
-        
+
 //        for (int i = 0; i<numberofnodes; i++)
 //        {
 //            fout<<switch_data[i].cnt<<'\t';
 //            //k+=switch_data[i].cnt;
-//            
+//
 //        }
-        
+
         for (int i = 0; i<numberofnodes; i++)
         {
             distribution[flowtime][i] = switch_data[i].cnt;
@@ -847,9 +859,9 @@ for (int time = 0; time < loop_time; time++) {
                 counter_overflow[flowtime]++;
             }
             //k+=switch_data[i].cnt;
-            
+
         }
-        
+
         int unittime_flows=0;
         float averageInNodes=average_func(numberofnodes);
         float RMSE;
@@ -861,14 +873,14 @@ for (int time = 0; time < loop_time; time++) {
         RMSE=RMSE_func(averageInNodes,numberofnodes);
         statistic[flowtime][0] = averageInNodes;
         statistic[flowtime][1] = RMSE;
-        
+
         cout<<"number of refused flow's is "<<refused<<endl;
         //fout<<fixed<<averageInNodes<<'\t'<<RMSE<<endl;
         cout<<"arrival time is "<<flowtime<<endl;
         //fout<<endl;
 
     }
-    
+
     for (int i = 0; i < 105; i++) {
         fout<<"arrival time is "<<i<<endl;
         for (int j = 0; j < numberofnodes; j++) {
@@ -876,41 +888,41 @@ for (int time = 0; time < loop_time; time++) {
         }
         fout<<endl;
     }
-    
+
     fout.close();
-    
-    filename = "Average_RMSE_Max_Hop" + total_flow + ".txt";
-    
+
+    filename = "Average_RMSE_"+ string1[schematic] + total_flow + ".txt";
+
     ofstream datafile(filename.c_str(),ofstream::out | ofstream::app);
-    
+
     for (int i = 0; i < 110; i++) {
         datafile<<"total flow number is "<<total_flow<<endl;
         datafile<<fixed<<statistic[i][0]<<'\t'<<statistic[i][1]<<endl;
     }
-    
-    
+
+
     datafile.close();
-    
+
     filename = "usage distribution_Max_Hop" + total_flow + ".txt";
-    
+
     ofstream data_analysis(filename.c_str(),ofstream::out | ofstream::app);
-    
+
     data_analysis<<"-------------------------Distribution of TCAM Usage------------------------"<<endl;
-    
+
     for (int i = 0; i < 110; i++) {
         for (int j = 0; j < 11; j++) {
             data_analysis<<usage_counter[i][j]<<'\t';
         }
         data_analysis<<endl;
     }
-    
+
     data_analysis<<"-------------------------Number of TCAM Overflow occurence-----------------"<<endl;
-    
+
     for (int i = 0; i < 110; i++) {
         data_analysis<<counter_overflow[i]<<endl;
     }
-    
+
     data_analysis.close();
-    
+
     cout<<"entry destroyed "<<destroyed<<endl;
 }
