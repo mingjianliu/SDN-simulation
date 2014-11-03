@@ -3,5 +3,3 @@ topology.txt:         512 nodes' topology
 topology_44.txt:      44 nodes' topology
 calculate_node.cpp:   To get the link degree of the each node
 trafficdemand1.txt:   To generate all edge traffic
-
-version 1101          Change the objective function and add new data to be printed
