@@ -1,0 +1,220 @@
+total flow number is 1500000
+53.417366	0.096614
+total flow number is 1500000
+105.086838	0.140961
+total flow number is 1500000
+154.537811	0.169549
+total flow number is 1500000
+203.352936	0.197546
+total flow number is 1500000
+251.941177	0.226361
+total flow number is 1500000
+298.210083	0.251179
+total flow number is 1500000
+344.288513	0.273691
+total flow number is 1500000
+389.254913	0.295494
+total flow number is 1500000
+432.467773	0.315990
+total flow number is 1500000
+475.591034	0.336456
+total flow number is 1500000
+517.201660	0.356037
+total flow number is 1500000
+558.341736	0.375349
+total flow number is 1500000
+597.529419	0.394295
+total flow number is 1500000
+634.980408	0.412397
+total flow number is 1500000
+671.338928	0.430421
+total flow number is 1500000
+704.131653	0.445940
+total flow number is 1500000
+733.876770	0.459297
+total flow number is 1500000
+760.294128	0.471000
+total flow number is 1500000
+784.375366	0.481454
+total flow number is 1500000
+805.778687	0.490563
+total flow number is 1500000
+825.246521	0.498876
+total flow number is 1500000
+842.599426	0.506333
+total flow number is 1500000
+857.764709	0.512998
+total flow number is 1500000
+870.414551	0.518471
+total flow number is 1500000
+880.966370	0.522986
+total flow number is 1500000
+890.350159	0.526995
+total flow number is 1500000
+898.725464	0.530691
+total flow number is 1500000
+905.476196	0.533709
+total flow number is 1500000
+911.134460	0.536258
+total flow number is 1500000
+915.871155	0.538402
+total flow number is 1500000
+920.025208	0.540360
+total flow number is 1500000
+923.557434	0.542023
+total flow number is 1500000
+926.442566	0.543446
+total flow number is 1500000
+928.602234	0.544520
+total flow number is 1500000
+930.324951	0.545397
+total flow number is 1500000
+931.380981	0.545929
+total flow number is 1500000
+932.151245	0.546317
+total flow number is 1500000
+932.610657	0.546557
+total flow number is 1500000
+932.837524	0.546670
+total flow number is 1500000
+933.019592	0.546763
+total flow number is 1500000
+933.187683	0.546849
+total flow number is 1500000
+933.366943	0.546944
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+933.394958	0.546960
+total flow number is 1500000
+0.000000	0.000000
+total flow number is 1500000
+0.000000	0.000000
+total flow number is 1500000
+0.000000	0.000000
+total flow number is 1500000
+0.000000	0.000000
+total flow number is 1500000
+0.000000	0.000000

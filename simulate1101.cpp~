@@ -903,7 +903,7 @@ int main(int argc, char **argv
 
     datafile.close();
 
-    filename = "usage distribution_"+ string1[schematic] + total_flow + ".txt";
+    filename = "usage distribution_Max_Hop" + total_flow + ".txt";
 
     ofstream data_analysis(filename.c_str(),ofstream::out | ofstream::app);
 
