@@ -797,7 +797,7 @@ int main(int argc, char **argv
 
 
 
-    fout<<endl<<endl<<"-------------------------------------------------------------------------------"<<endl<<flownumber<<"\ttotally flow number"<<endl;
+    fout<<endl<<endl<<"-------------------------------------------------------------------------------"<<endl<<flownumber*loop_time<<"\ttotally flow number"<<endl;
     fout<<endl;
 //----------------------------build up topology-----------------------------
     number=PathCost_input2("topology.txt",0,numberofnodes);
@@ -853,6 +853,11 @@ int main(int argc, char **argv
         for (int i = 0; i<numberofnodes; i++)
         {
             distribution[flowtime][i] = switch_data[i].cnt;
+
+            if (switch_data[i].cnt == 0) {
+                continue;
+            }
+   
             int index = switch_data[i].cnt/100;
             usage_counter[flowtime][index]++;
             if (switch_data[i].cnt == MAX_ENTRY) {
