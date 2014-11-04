@@ -21,7 +21,7 @@ using namespace std;
 #define HOPS     4
 #define MAX_ENTRY 100000
 #define MEAN     10
-#define DURATIONTIME 10
+#define DURATIONTIME 20
 
 int selecthops;
 int arrayh[MAX_NODE];
@@ -824,7 +824,7 @@ int main(int argc, char **argv
     int numberofnodes=atoi(argv[2]);
     loop_time=atoi(argv[3]);
     string total_flow = itos(flownumber * loop_time);
-    float criteria_generate = 0.1;
+    float criteria_generate = 0.05;
     float statistic[200][2];
     schematic=atoi(argv[4]);
     string string1[4];
