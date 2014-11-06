@@ -1,0 +1,39 @@
+Totally 9600 flow type (from one source to one destination), 1920 multiply x (from 1 to 10) flows are generated each time slot. Time slot length is fixed as 52(10million/1920=. 
+
+
+
+		Max-Hop		Objective function(time slot)		OpenFlow
+
+		First rejection time
+
+10million	9		none					1
+20million	3		none					1
+30million	2		none					1	
+40million	2		none					1	
+50million	2		none					1
+60million	2		15					1	
+70million	1		11					1	
+80million	1		10					1		
+90million	1		8					1				
+100million	1		7					1		
+
+
+		Average entry usage
+
+10million	60		54					112				
+20million	120		109					196
+30million	178		162					277	
+40million	237		216					353	
+50million	292		270					425
+60million	347		325					494	
+70million	403		375					560	
+80million	458		425					620		
+90million	510		472					675				
+100million	562		513					721		
+
+
+
+
+
+
+

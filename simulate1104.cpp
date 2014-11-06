@@ -19,15 +19,15 @@ using namespace std;
 #define MAX_NUM  1000
 #define MULTIPLE 10
 #define HOPS     4
-#define MAX_ENTRY 100000
+#define MAX_ENTRY 1000
 #define MEAN     10
-#define DURATIONTIME 10
+#define DURATIONTIME 20
 
 int selecthops;
 int arrayh[MAX_NODE];
 int testnumber=0;
 int loop_time;
-int key;
+int key=0;
 string scheme_name;
 
 
@@ -81,7 +81,7 @@ int distribution[200][512];
 default_random_engine generator(time(NULL));
 
 uniform_int_distribution<int> uniform_dis(0,DURATIONTIME);
-uniform_int_distribution<int> generation(1,10);
+uniform_int_distribution<int> generation(1,40);
 
 auto uni_generation = bind(generation,generator);
 auto uni_dis = bind(uniform_dis,generator);
@@ -679,7 +679,7 @@ void tcam_lookup(int dst,int endtime)
 {
     if(switch_data[position].cnt>=MAX_ENTRY) {
         if (refused==0) {
-            recordflow=k;
+            recordflow=key;
         }
         refused++;
         tmp_tag.clear();
@@ -744,7 +744,7 @@ void express_handle(int dst,int endtime)
 
 int poisson_dis(float criteria) {
     float temp = float(uni_generation());
-    if (temp/10.0 < criteria) {
+    if (temp/40.0 < criteria) {
         return 1;
     }
     else
@@ -879,7 +879,7 @@ int main(int argc, char **argv
             entry_destroy(iter->first,numberofnodes);
         }
         flowtime = iter->first;
-
+ 
 
         for (list_size entry_cnt = 0; entry_cnt != entry_num; ++entry_cnt,++iter) {
 
@@ -940,6 +940,7 @@ int main(int argc, char **argv
         //fout<<fixed<<averageInNodes<<'\t'<<RMSE<<endl;
         cout<<"arrival time is "<<flowtime<<endl;
         //fout<<endl;
+        key++;
 
     }
 
@@ -1009,5 +1010,6 @@ int main(int argc, char **argv
     data_analysis1.close();
 
     cout<<"entry destroyed "<<destroyed<<endl;
+    cout<<"refuse time"<<recordflow<<endl;
 }
 
