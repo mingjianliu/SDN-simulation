@@ -18,7 +18,7 @@ using namespace std;
 #define MAX_NODE 1000
 #define MAX_NUM  1000
 #define MULTIPLE 10
-#define HOPS     4
+#define HOPS     3
 #define MAX_ENTRY 1000
 #define MEAN     10
 #define DURATIONTIME 20
@@ -78,7 +78,7 @@ int destroyed = 0;
 int distribution[200][512];
 ////////////////////////////////////////////////
 
-default_random_engine generator(time(NULL));
+default_random_engine generator(0);
 
 uniform_int_distribution<int> uniform_dis(0,DURATIONTIME);
 uniform_int_distribution<int> generation(1,40);
@@ -95,7 +95,7 @@ int usage_counter[110][11];
 int counter_overflow[110];
 int usage_counter1[110][11];
 int counter_overflow1[110];
-
+int key_value;
 ///////////////////////////////////////////////////
 
 int myPow(int x, int p) {
@@ -112,22 +112,31 @@ string itos(int value) {
 
 float average_func(int numberofnodes) {
     int sum = 0;
+    float temp_sum=0.0;
     for (int node_id = 0; node_id < numberofnodes; node_id++) {
         sum += switch_data[node_id].cnt;
+        if (switch_data[node_id].cnt) {
+            temp_sum+=1.0;
+        }
     }
-    float average = float(sum)/357.0;
+    float average = float(sum)/512;
+    cout<<temp_sum<<endl;
     return average;
 }
 
 float RMSE_func(float average, int numberofnodes) {
     float RMSE = 0.0;
+    float temp_sum=0.0;
     int node_id = 0;
     while (node_id < numberofnodes) {
         RMSE += pow((float(switch_data[node_id].cnt)-average)/100000.0,2.0);
         node_id+=1;
+        if (switch_data[node_id].cnt) {
+            temp_sum+=1.0;
+        }
     }
     //RMSE -= 155*(pow((0.0-average)/1000.0,2.0));
-    RMSE = sqrt(RMSE/float(512.0));
+    RMSE = sqrt(RMSE/temp_sum);
     return RMSE;
 }
 
@@ -416,7 +425,7 @@ void path_statistic(int policy, int number)
 /*------------------max hop--------------------*/
 void path_request1(int policy, int dst) {
     int  temp[MAX_NODE];
-    int  label;
+    int  label=0;
     if (HOPS == 1) {
         scheme_name = "Open_Flow";
     }
@@ -441,26 +450,42 @@ void path_request1(int policy, int dst) {
         //cout<<"now src is "<<src<<endl;
         //cout<<i+1<<"th output switch "<<temp[i]<<endl;
     }
+
+    //cout<<"print the path"<<endl;
+    //for(int i=0;i<label;++i){cout<<temp[i]<<"<-";}
+    //cout<<endl;
+
+
     tmp_tag.clear();
+    //for(int i=0;i<MAX_NODE;i++){arrayh[i]=0;}
     for(int i=0; (label-i)>0; i++) {
         arrayh[i]=temp[label-1-i];
-        //cout<<"label is "<<temp[i]<<endl;
+            //cout<<"temp is "<<arrayh[i]<<endl;
     }
-    tmp_tag.assign(arrayh, arrayh+ HOPS);
+
+    if (label>HOPS) {
+        label=HOPS;
+    }
+    tmp_tag.assign(arrayh, arrayh+ label);
 
 }
 
 /*------------------new objective function help function, to get the first context switch's position--------------------*/
-int path_firsthop(int number,int length) {
-    int number1;
-    for(int i=length; i>0; --i)
-    {
-        if ((number%(myPow(2,i))-number%(myPow(2,(i-1)))))
+int path_firsthop(unsigned int number,unsigned int length) {
+    int number1=1;
+    for(int i=0; i<length; ++i)
+    {   //cout<<"the number is"<<number<<endl;
+        if (number/myPow(2,i))
         {
-            return i;
+            //cout<<"the returned length"<<length-i<<endl;
+            //return (length-i);
+            number1=length-i;
+            //cout<<"the length is=--------------------"<<length<<endl;
+            //cout<<"the bit examing is "<<number/myPow(2,i)<<endl;
         }
-        number1=i;
+        //number1=HOPS;
     }
+    //cout<<"the key value inside is----------------------"<<number1<<endl;
     return number1;
 }
 
@@ -468,48 +493,56 @@ int path_firsthop(int number,int length) {
 double path_cost2(double average, int length, int number)
 {
 
-    double cost=0.0;
+    double costx=0.0;
     int temp=0;
     int tempnumber;
     int temp_count;
-    for(int i=1; i<=length; ++i) {
-        tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
+    int temp1=0;
+    
+
+    for(int i=0; i<length; ++i) {
+        //tempnumber=number%(myPow(2,i+1))-number%(myPow(2,i));  //Get the bit in ith hop
+
+        tempnumber=number/(myPow(2,i))-(number/myPow(2,i+1))*2;
 
         temp_count=switch_data[temppath[i]].cnt;
-
-        if(tempnumber)
+        
+        if(!tempnumber)
         {
             temp++;
             if(temp>=HOPS) {
-                return 9999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
+                //cout<<"cost 999999 returned////////////////////////"<<endl;
+                return 999999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
             }
         }
         else
         {
+            key_value=length-i;
             temp=0;
             if(temp_count<333)
             {
-                cost+=0.01*temp_count;
+                costx+=0.01;
             }
             else if(temp_count<666)
             {
-                cost+=0.03*temp_count;
+                costx+=0.03;
             }
             else if(temp_count<900)
             {
-                cost+=0.1*temp_count;
+                costx+=0.1;
             }
-            else if(temp_count<=1000)
+            else if(temp_count<1000)
             {
-                cost+=0.7*temp_count;
+                costx+=0.7;
             }
             else {
-                return 9999.99;
+                return 999999.99;
             }
         }   //Count the consecutive '0's
 
     }
-    return cost;
+    //cout<<"cost "<<costx<<"returned////////////////////////"<<endl;
+    return costx;
 }
 
 double path_cost1(double average, int length, int number)
@@ -517,24 +550,25 @@ double path_cost1(double average, int length, int number)
     double cost=0.0;
     int temp=0;
     int tempnumber;
-    for(int i=1; i<=length; ++i) {
-        tempnumber=number%(myPow(2,i))-number%(myPow(2,(i-1)));  //Get the bit in ith hop
+    for(int i=0; i<length; ++i) {
+
+        tempnumber=number/(myPow(2,i))-(number/myPow(2,i+1))*2;  //Get the bit in ith hop
 
 
         if(tempnumber)
         {
-            temp++;
+            temp=0;
             if(temppath[i]>average)
             {
                 cost+=2;
             }
         }
         else {
-            temp=0;
+            temp++;
             if(temp>=HOPS) {
-                return 9999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
+                return 999999.99;   //If no less than the max number of hops are 0, then it is not valid, return big value as invalid
             }
-            cost+=0.2;
+            cost-=0.2;
         }   //Count the consecutive '0's
     }
     return cost;
@@ -545,11 +579,11 @@ void path_request2(int policy, int dst)
 //the objective function 1
 
     scheme_name = "New_Func";
-    int length=0;
-    int temp_position=dst;
+    int length=1;
+    //int temp_position=dst;
     int src=position;
-    int hops;
-    double average,cost=9999.99,temp_cost=9999.99;
+    int hops=1;
+    double average,cost=999999.99,temp_cost=999999.99;
 
     for(int i=0; i<MAX_NODE; i++) {
         temppath[i]=-1;
@@ -566,20 +600,27 @@ void path_request2(int policy, int dst)
         dst=temppath[i];
     }
 
+    //cout<<"print the path"<<endl;
+    //for(int i=0;i<length;++i){cout<<temppath[i]<<"<-";}
+    //cout<<endl;
 
-    for(int i=0; i<=length; ++i) //substitute all nodes with their TCAM entry number
-    {
-        average+=switch_data[temppath[i]].cnt;
-    }
+    //for(int i=0; i<=length; ++i) //substitute all nodes with their TCAM entry number
+    //{
+    //    average+=switch_data[temppath[i]].cnt;
+    //}
 
-    average/=(length+1);
+    //average/=(length+1);
 
     for(int i=0; i<myPow(2,length); ++i)
     {
+        //cout<<"now trying number "<<i<<endl;
+        //if (i<(myPow(2,length)/myPow(2,hops)))
+        //    continue;
 
         if (schematic==1)
         {
             temp_cost=path_cost2(average,length,i);
+            //cout<<"///////////cost is "<<temp_cost<<endl;
         }
         else {
             temp_cost=path_cost1(average,length,i);
@@ -591,11 +632,26 @@ void path_request2(int policy, int dst)
         }
     }
 
+    //cout<<"----------the cost is "<<cost<<endl;
+    if (cost==999999.99) {
+        refused++;
+        tmp_tag.clear();
+        position=temp_flow.dst;
+        return;
+    }
+
     tmp_tag.clear();
+    //for(int i=0; i<MAX_NODE; i++) {
+    //    arrayh[i]=0;
+    //}
     for(int i=0; (length-i)>0; i++) {
         arrayh[i]=temppath[length-1-i];
+    //    cout<<"the hops is "<<arrayh[i]<<endl;
     }
+
+    //cout<<"----------the key value is "<<hops<<endl;
     tmp_tag.assign(arrayh, arrayh+ hops);
+
 
 }
 
@@ -704,7 +760,7 @@ void tcam_lookup(int dst,int endtime)
         path_request4(0,dst);
     }
 
-    (switch_data[position].table_entry)[dst] = tmp_tag;
+    //(switch_data[position].table_entry)[dst] = tmp_tag;
     //}
     //else {
     //    path_request1(0,dst);
@@ -879,17 +935,18 @@ int main(int argc, char **argv
             entry_destroy(iter->first,numberofnodes);
         }
         flowtime = iter->first;
- 
+
 
         for (list_size entry_cnt = 0; entry_cnt != entry_num; ++entry_cnt,++iter) {
-
+//            cout<<"handling the "<<entry_cnt<<" flow"<<endl;
             //flow parameter setting up, preparing for processing per flow
             iter_vector iter_vector_per_entry = (iter->second).begin();
             temp_flow.src = *iter_vector_per_entry;
 
+//cout<<endl<<"the source is "<<temp_flow.src<<endl;
             iter_vector_per_entry++;
             temp_flow.dst = *iter_vector_per_entry;
-
+//cout<<"the destination is "<<temp_flow.dst<<endl;
             iter_vector_per_entry++;
 
             temp_flow.end_time = *iter_vector_per_entry;
@@ -898,7 +955,9 @@ int main(int argc, char **argv
             position = temp_flow.src;
             while (position != temp_flow.dst) {
                 express_handle(temp_flow.dst,temp_flow.end_time);
+//cout<<"the current routing is "<<position<<endl;
             }
+            tmp_tag.clear();
         }
 
 
@@ -1008,6 +1067,14 @@ int main(int argc, char **argv
     }
 
     data_analysis1.close();
+
+    //for(int i=0;i<512;i++){
+    //cout<<shortestpath[0][25][481]<<" ";
+    //cout<<shortestpath[0][25][476]<<" ";
+    //cout<<shortestpath[0][25][204]<<" ";
+    //cout<<shortestpath[0][25][41]<<" ";
+    //cout<<shortestpath[0][25][68]<<"/t";
+    //}
 
     cout<<"entry destroyed "<<destroyed<<endl;
     cout<<"refuse time"<<recordflow<<endl;
