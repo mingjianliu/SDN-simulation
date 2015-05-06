@@ -12,4 +12,3 @@ argv3: looptime, indicates the flow density
 argv4: schematic, indicates which objective function is in using
 argv5: 0 = flow will be ended in the middle, 1 = flows are never being deleted
 agrv6: 'uni', 'multi', 'hybird'
-argv7: policy

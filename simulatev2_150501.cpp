@@ -29,19 +29,26 @@ struct traffic_node{
 	map<int, traffic_node*> traffic_output; 	
 };
 
+struct flows{
+	int src;
+	vector<int> dst;
+	int endtime;
+};
+
 typedef vector <int> destination;
 typedef map<int, destination> traffic;
 typedef map<int, destination>::iterator traffic_iter;
-typedef map<
 
 string itos(int value) {
-
     stringstream stream;
-
     stream<<value;
-
     return stream.str();
+}
 
+traffic_node* init_treenode(int number){
+    traffic_node *ret = (traffic_node *)malloc(sizeof(traffic_node));
+    ret->label = number;
+    return ret;
 }
 
 /*------------------------------------------------------------------------
@@ -55,13 +62,9 @@ string itos(int value) {
 ------------------------------------------------------------------------*/
 
 int myPow(int x, int p) {
-
     if (p == 0) return 1;
-
     if (p == 1) return x;
-
     return x * myPow(x, p-1);
-
 }
 /*------------------------------------------------------------------------
 
@@ -306,13 +309,40 @@ void GenerateMulti(traffic &MultiTraffic, vector<vector<int>> &demand){
 	    temp->second.push_back(TempTraffic[1]);
 	}
     } 
+    return;
 }
 //-------------------------------------------------------------------------------
 
 
-void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_tree){
-
-
+void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_tree, int[][][] &ShortestPath, int policy){
+    for (traffic_iter iter = MultiTraffic.begin(); iter != MultiTraffic.end(); iter++){
+	
+	traffic_node* root = init_treenode(iter->first);
+	traffic_tree.insert({iter->first, root});
+	
+	for(int destination: iter->second){
+	//Use DFS to insert every nodes from root
+	    traffic_node* node = root;
+	    //1. Get the shortest path
+	    vector<int> path;
+	    int position = iter->first;
+	    while(position!=iter->second){
+		position = ShortestPath[policy][position][iter->second];
+		path.push_back(position);
+	    }
+	    
+	    //2. Using vector path, traverse the tree
+	    for(int cur : path){
+		auto temp = node->traffic_output.find(cur);
+		if( temp == node->traffic_output.end() ){
+			node->traffic_output.insert({cur,init_treenode(cur)});
+			temp = node->traffic_output.find(cur);
+		}
+		node = temp->second;
+	    }
+	}
+    }
+    return;
 }
 //-------------------------------------------------------------------------------
 
@@ -320,8 +350,11 @@ int Rand_Generation_Multicast(traffic &MultiTraffic){
 
 }
 
+void Handle_Flow(flows &flow, map<int, traffic_node*> &traffic_tree){
+//We need to add endtime to all context switches later
 
 
+}
 
 //-------------------------------------------------------------------------------
 
@@ -334,6 +367,7 @@ int main(int argc, char **argv) {
     int loop_time=atoi(argv[3]);	  	//the density of flow
     float criteria_generate = 0.1;
     int schematic=atoi(argv[4]);		//four method choose from input
+    int policy = atoi(argv[7]);
     traffic MultiTraffic;
     map<int, traffic_node*> traffic_tree;
     vector<vector<int>> demand;
@@ -348,7 +382,6 @@ int main(int argc, char **argv) {
     int PathCost[MULTIPLE][MAX_NODE][MAX_NODE];
     int PathLength[MULTIPLE][MAX_NODE][MAX_NODE];
     int ShortestPath[MULTIPLE][MAX_NODE][MAX_NODE];
-
 
     string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
     ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
@@ -368,7 +401,9 @@ int main(int argc, char **argv) {
     }
 		
     GenerateMulti(MultiTraffic,demand); 
-    GenerateMulti_Tree(MultiTraffic,traffic_tree);
+    GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, policy);
+
+    //Handleflow
 
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
@@ -452,4 +487,4 @@ int main(int argc, char **argv) {
         cout<<"Accepted flow num is "<<flownumber*loop_time - refused<<endl;
         cout<<"Total route request is "<<route_request<<endl;
     }
-
+}
