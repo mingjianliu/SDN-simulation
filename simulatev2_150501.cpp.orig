@@ -24,15 +24,15 @@ using namespace std;
 #define MEAN     10
 #define DURATIONTIME 10
 
-struct traffic_node {
-    int label;
-    map<int, traffic_node*> traffic_output;
+struct traffic_node{
+	int label;
+	map<int, traffic_node*> traffic_output; 	
 };
 
-struct flows {
-    int src;
-    vector<int> dst;
-    int endtime;
+struct flows{
+	int src;
+	vector<int> dst;
+	int endtime;
 };
 
 typedef vector <int> destination;
@@ -45,7 +45,7 @@ string itos(int value) {
     return stream.str();
 }
 
-traffic_node* init_treenode(int number) {
+traffic_node* init_treenode(int number){
     traffic_node *ret = (traffic_node *)malloc(sizeof(traffic_node));
     ret->label = number;
     return ret;
@@ -83,20 +83,20 @@ int myPow(int x, int p) {
 
 ------------------------------------------------------------------------*/
 
-int PathCost_Input(const char* filename,const int policy, const int number, int[][][] &pathcost) {
+int PathCost_Input(const char* filename,const int policy, const int number, int[][][] &pathcost){
 
     FILE *file;
     int h=number;/*read the first line node and edge numbers*/
     /*read and skip the second line*/
     file=fopen(filename,"r");
 
-    if(file==NULL) {
+    if(file==NULL){
         cout<<"File doesn't exist."<<endl;
         fclose(file);
-        return -1;
+	return -1;
     }
 
-    else {
+    else{
         /*initialize traffic matrix*/
 
         for(int i=0; i<h; i++) {
@@ -174,10 +174,10 @@ int PathCost_Input(const char* filename,const int policy, const int number, int[
 
 	Input	:	policy, numberofnodes, shortestpath, pathcost, pathlength
 
-	Output	:
+	Output	:	
 
 ------------------------------------------------------------------------*/
-void calculate_path(int policy, int number, int[][][] &PathCost, int[][][] &PathLength , int[][][] &ShortestPath) {
+void calculate_path(int policy, int number, int[][][] &PathCost, int[][][] &PathLength , int[][][] &ShortestPath){
     int tmp[MAX_NODE][MAX_NODE];
     int tmp2[MAX_NODE][MAX_NODE];
     for (int i=0; i<number; i++) {
@@ -249,12 +249,12 @@ int trafficdemand(vector<vector<int>> &demand) {
     {
         cout<<"File doesn't exist."<<endl;
         fclose(file);
-        return -1;
+	return -1;
     }
     else
     {
         /*initialize traffic matrix*/
-        vector<int> temp;
+	vector<int> temp;
 
         /*input path cost raw data*/
         char ch=getc(file);
@@ -290,8 +290,8 @@ int trafficdemand(vector<vector<int>> &demand) {
                 }
                 temp.push_back(atoi(str));
                 demand.push_back(temp);
-                temp.clear();
-                count++;
+		temp.clear();
+		count++;
             }
             else {
                 ch=getc(file);
@@ -304,65 +304,65 @@ int trafficdemand(vector<vector<int>> &demand) {
 }
 //-------------------------------------------------------------------------------
 
-void GenerateMulti(traffic &MultiTraffic, vector<vector<int>> &demand) {
-    for(vector<int> TempTraffic: demand) {
-        traffic_iter temp = MultiTraffic.find(TempTraffic[0]);
-        if(temp==MultiTraffic.end()) {
-            vector<int> tempVector;
-            tempVector.push_back(TempTraffic[1]);
-            MultiTraffic.insert({TempTraffic[0],tempVector});
-        }
-        else {
-            temp->second.push_back(TempTraffic[1]);
-        }
-    }
+void GenerateMulti(traffic &MultiTraffic, vector<vector<int>> &demand){
+    for(vector<int> TempTraffic: demand){
+	traffic_iter temp = MultiTraffic.find(TempTraffic[0]);
+	if(temp==MultiTraffic.end()){
+	    vector<int> tempVector;
+	    tempVector.push_back(TempTraffic[1]);
+	    MultiTraffic.insert({TempTraffic[0],tempVector});
+	}
+	else{
+	    temp->second.push_back(TempTraffic[1]);
+	}
+    } 
     return;
 }
 //-------------------------------------------------------------------------------
 
 
-void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_tree, int[][][] &ShortestPath, int policy) {
-    for (traffic_iter iter = MultiTraffic.begin(); iter != MultiTraffic.end(); iter++) {
-
-        traffic_node* root = init_treenode(iter->first);
-        traffic_tree.insert({iter->first, root});
-
-        for(int destination: iter->second) {
-            //Use DFS to insert every nodes from root
-            traffic_node* node = root;
-            //1. Get the shortest path
-            vector<int> path;
-            int position = iter->first;
-            while(position!=iter->second) {
-                position = ShortestPath[policy][position][iter->second];
-                path.push_back(position);
-            }
-
-            //2. Using vector path, traverse the tree
-            for(int cur : path) {
-                auto temp = node->traffic_output.find(cur);
-                if( temp == node->traffic_output.end() ) {
-                    node->traffic_output.insert({cur,init_treenode(cur)});
-                    temp = node->traffic_output.find(cur);
-                }
-                node = temp->second;
-            }
-        }
+void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_tree, int[][][] &ShortestPath, int policy){
+    for (traffic_iter iter = MultiTraffic.begin(); iter != MultiTraffic.end(); iter++){
+	
+	traffic_node* root = init_treenode(iter->first);
+	traffic_tree.insert({iter->first, root});
+	
+	for(int destination: iter->second){
+	//Use DFS to insert every nodes from root
+	    traffic_node* node = root;
+	    //1. Get the shortest path
+	    vector<int> path;
+	    int position = iter->first;
+	    while(position!=iter->second){
+		position = ShortestPath[policy][position][iter->second];
+		path.push_back(position);
+	    }
+	    
+	    //2. Using vector path, traverse the tree
+	    for(int cur : path){
+		auto temp = node->traffic_output.find(cur);
+		if( temp == node->traffic_output.end() ){
+			node->traffic_output.insert({cur,init_treenode(cur)});
+			temp = node->traffic_output.find(cur);
+		}
+		node = temp->second;
+	    }
+	}
     }
     return;
 }
 //-------------------------------------------------------------------------------
-int Rand_Generation_Multicast(traffic &MultiTraffic) {
+int Rand_Generation_Multicast(traffic &MultiTraffic){
 
 }
 //-------------------------------------------------------------------------------
-vector<int> Assign_Path(vector<int> destination, traffic_node* root) {
-
+vector<int> Assign_Path(vector<int> destination, traffic_node* root){
+    
     multimap <int,vector<int>>      flow_setup;
-    for(int temp: destination) {
-
+    for(int temp: destination){
+        
     }
-
+    
 
 }
 //-------------------------------------------------------------------------------
@@ -370,12 +370,12 @@ vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree) {
 //We need to add endtime to all context switches later
     //step1. find all switches
     map<int, traffic_node>::iterator temp = traffic_tree.find(flow.src);
-    if( temp == traffic_tree.end() ) {
+    if( temp == traffic_tree.end() ){
         vector<int> temp;
         return temp;
-    } else {
-        //step2. assgin entry to switches
-
+    }else {    
+    //step2. assgin entry to switches
+        
     }
 }
 
@@ -418,12 +418,12 @@ int main(int argc, char **argv) {
 
     calculate_path(0, numberofnodes, PathCost, PathLength, ShortestPath);
 
-    if(trafficdemand(demand)) {
-        cout<<"Error reading trafficdemand"<<endl;
-        return -1;
+    if(trafficdemand(demand)){
+	cout<<"Error reading trafficdemand"<<endl;
+	return -1;
     }
-
-    GenerateMulti(MultiTraffic,demand);
+		
+    GenerateMulti(MultiTraffic,demand); 
     GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, policy);
 
     //Handleflow
