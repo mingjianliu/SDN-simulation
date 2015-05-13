@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <time.h>
+#include <cmath>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <time.h>
 #include <random>
-#include <unistd.h>
 #include <functional>
-#include <cmath>
 #include <sstream>
-#include <algorithm>
+//#include <algorithm>
 
 using namespace std;
 
@@ -45,6 +44,53 @@ string itos(int value) {
     return stream.str();
 }
 
+
+class Switches {
+    unsigned int total;
+    vector <int> count;
+public:
+    Switches(unsigned int size) : total(0), count( size, 0 ), temp2( new map < int, int>[size] ), switch_size(size) {} ;
+    unsigned int Total_Usage() {
+        return total;
+    }
+    vector <int> Usage() {
+        return count;
+    }
+    void Destroy( int time ) {
+        unsigned int number = 0;
+        for(int i = 0; i < switch_size; ++i) {
+            for(auto iter : temp2[i]) {
+                if (iter.first > time) {
+                    break;
+                }
+                number += iter.second;
+                count[i] -= iter.second;
+                temp2[i].erase (iter.first);
+            }
+        }
+        total -= number;
+    }
+    void Insert( int time, vector <int> nodes ) {
+        total += nodes.size();
+        for(int node : nodes) {
+            count[node]++;
+            auto iter = temp2[node].find(time);
+            if( iter == temp2[node].end() ) {
+                temp2[node].insert({time, 1});
+            } else {
+                iter->second++;
+            }
+        }
+        return;
+    }
+
+private:
+    unsigned int switch_size;
+    map < int, int >* temp2; //key = time, value = entry number
+};
+
+
+
 traffic_node* init_treenode(int number) {
     traffic_node *ret = (traffic_node *)malloc(sizeof(traffic_node));
     ret->label = number;
@@ -75,15 +121,15 @@ int myPow(int x, int p) {
 }
 /*------------------------------------------------------------------------
 
-	This part record the node to node cost, save it in pathcost
+	This part record the node to node cost, save it in Pathcost
 
-	Input	:	topology.txt, numberofnodes, pathcost[policy][][]
+	Input	:	topology.txt, numberofnodes, Pathcost[policy][][]
 
 	Output	:	0 or -1
 
 ------------------------------------------------------------------------*/
 
-int PathCost_Input(const char* filename,const int policy, const int number, int[][][] &pathcost) {
+int Pathcost_Input(const char* filename,const int policy, const int number, int[][][] &Pathcost) {
 
     FILE *file;
     int h=number;/*read the first line node and edge numbers*/
@@ -102,10 +148,10 @@ int PathCost_Input(const char* filename,const int policy, const int number, int[
         for(int i=0; i<h; i++) {
             for(int j=0; j<h; j++) {
                 if(i==j) {
-                    pathcost[policy][i][j]=0;
+                    Pathcost[policy][i][j]=0;
                 }
                 else {
-                    pathcost[policy][i][j]=99999;
+                    Pathcost[policy][i][j]=99999;
                 }
             }
         }
@@ -157,7 +203,7 @@ int PathCost_Input(const char* filename,const int policy, const int number, int[
                     ch=getc(file);
                     n++;
                 }
-                pathcost[policy][x][y]=atoi(str);
+                Pathcost[policy][x][y]=atoi(str);
             }
             else {
                 ch=getc(file);
@@ -170,14 +216,14 @@ int PathCost_Input(const char* filename,const int policy, const int number, int[
 
 /*------------------------------------------------------------------------
 
-	This part calculate the shortest path in the node matrix and calculate the pathlength and also pathcost
+	This part calculate the shortest path in the node matrix and calculate the pathlength and also Pathcost
 
-	Input	:	policy, numberofnodes, shortestpath, pathcost, pathlength
+	Input	:	policy, numberofnodes, shortestpath, Pathcost, pathlength
 
 	Output	:
 
 ------------------------------------------------------------------------*/
-void calculate_path(int policy, int number, int[][][] &PathCost, int[][][] &PathLength , int[][][] &ShortestPath) {
+void calculate_path(int policy, int number, int[][][] &Pathcost, int[][][] &PathLength , int[][][] &ShortestPath) {
     int tmp[MAX_NODE][MAX_NODE];
     int tmp2[MAX_NODE][MAX_NODE];
     for (int i=0; i<number; i++) {
@@ -205,9 +251,9 @@ void calculate_path(int policy, int number, int[][][] &PathCost, int[][][] &Path
     for (int k=0; k<number; k++) {
         for (int i=0; i<number; i++) {
             for (int j=0; j<number; j++) {
-                if(pathcost[policy][i][j]>pathcost[policy][i][k]+pathcost[policy][k][j]) {
+                if(Pathcost[policy][i][j]>Pathcost[policy][i][k]+Pathcost[policy][k][j]) {
                     /*path length*/tmp2[i][j]=pathlength[policy][i][k]+pathlength[policy][k][j];
-                    /*path cost  */pathcost[policy][i][j]=pathcost[policy][i][k]+pathcost[policy][k][j];
+                    /*path cost  */Pathcost[policy][i][j]=Pathcost[policy][i][k]+Pathcost[policy][k][j];
                     /*last hop   */tmp[i][j]=shortestpath[policy][k][j];
                 }
                 else  {
@@ -355,158 +401,151 @@ void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_
 int Rand_Generation_Multicast(traffic &MultiTraffic) {
 
 }
-//-------------------------------------------------------------------------------
-vector < int > Assign_Path(vector < int > destination, traffic_node* root) {
 
-    vector
-    multimap <int,int>      flow_setup;
-    for(int temp : destination) {
+
+//-------------------------------the new objective function-------------------------------
+double path_cost2(vector<int> const &path, int positions, vector <int> const &usage){
+
+    double costx=0.0;
+    int length = path.size();
+    for (int i = 0; i<length; ++i ) {
+        int test = positions & 1; 
+        positions = positions >> 1;
+        if ( ! (test) )
+            continue;
+
+        int node_usage = usage[ path[length - 1 - i] ];
+
+        if(node_usage<333*2) {
+            costx+=0.01;
+        }else if(node_usage<666*2) {
+            costx+=0.03;
+	}else if(node_usage<900*2) {
+            costx+=0.1;
+        }else if(node_usage<1000*2) {
+            costx+=0.7;
+        }else {
+            return 999999.99;
+        }
 
     }
+    return costx;
+}
 
+
+//-------------------------------------------------------------------------------
+vector <int> Findpath(vector <int> const & path, int const schematic, vector <int> const &usage) {
+    vector <int> result;
+    if( schematic == 0 ) { //Maxhop
+        for( unsigned i = 0; i < path.size(); ++i) {
+            if( i % HOPS == 0 || i == path.size() - 1 )    result.push_back( path.at(i) );
+        }
+    }
+    if( schematic == 1 ) {
+        double cost = 999999.99, temp_cost=999999.99;
+        int positions = 1;
+        int length = path.size();
+        int range = myPow( 2, length );
+        for( int i=myPow( 2, length-1 ); i< range; ++i ) {
+            if( ! (i%2) ) continue;
+
+            int temp_number = i;
+            int count = 0;
+            while(temp_number && count < HOPS){
+                if ( temp_number & 1 ) count = 0;
+                else ++count;
+                temp_number = temp_number >> 1;
+            }
+            if( count >= HOPS ) continue;
+
+            temp_cost=path_cost2(path, i, usage);
+            if( cost>temp_cost ) {
+                cost=temp_cost;
+                positions = i;
+            }
+        }
+        for( int i=1; i <= path.size(); ++i) {
+            if(positions>>i) result.push_back( path.at(i) );
+        }
+    }//Jumpflow
+    //check the result's nodes
 
 }
 //-------------------------------------------------------------------------------
-vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree) {
+vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int schematic, vector <int> &usage) {
+
+    vector <int> result;
+    vector <int> path;
+    map < traffic_node*, vector <int> > flow_setup;
+    bool loop = true;
+    do {
+        loop = true;
+        flow_setup.clear();
+        vector <int> temp_dest = destination;
+        destination.clear();
+        for(int temp : temp_dest) {
+            auto temp_node = (root->traffic_output).find(temp);
+            if ( temp_node == ( root->traffic_output ).end() ) { //if the traffic stop here, skip it
+                loop = false;
+                continue;
+            }
+            destination.push_back(temp);
+            //Here we insert the key=node pointer, value=next node's label to map
+            auto iter = flow_setup.find(temp_node->second);
+            if ( iter == flow_setup.end() ) {
+                vector <int> temp1 { temp };
+                flow_setup.insert({ temp_node->second, temp1 });
+            } else {
+                iter->second.push_back( temp );
+            }
+        }
+        path.push_back( root->label );
+    } while( flow_setup.size() == 1 && destination.size() > 0 && loop ); //the loop is used to see whether there is any node stop in the middle
+    //After quit it, we have 0 or multiple traffic nodes
+    if( flow_setup.size() >1 ) { //Recursively run it for all nodes
+        for( auto iter_flow : flow_setup ) {
+            vector < int > temp = Assign_Path( iter_flow.second, iter_flow.first, schematic, usage );
+            if ( temp.empty() ) {
+                result.clear();
+                return result;
+            }
+            result.insert( result.end(), temp.begin(), temp.end() );
+        }
+    }
+
+    //find path by vector path, save it into result
+    vector <int> temp = Findpath(path, schematic, usage);
+    if( temp.empty() ) {
+        result.clear();
+    } else {
+        result.insert( result.begin(), temp.begin(), temp.end() );
+    }
+    return result;
+}
+
+//-------------------------------------------------------------------------------
+vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int schematic, vector <int> &usage) {
 //We need to add endtime to all context switches later
-    map<int, traffic_node>::iterator temp = traffic_tree.find(flow.src);
+    map<int, traffic_node*>::iterator temp = traffic_tree.find(flow.src);
     if( temp == traffic_tree.end() ) {
         vector<int> temp;
         return temp;
     } else {
-        return Assgin_Path(flow.dst,temp->second);
+        return Assign_Path(flow.dst,temp->second, schematic, usage);
     }
 }
 
 //-------------------------------------------------------------------------------
 
-int main(int argc, char **argv) {
-    int number=0;
-    int overhead_counter = 0;
-    int route_request = 0;
-    int flownumber = atoi(argv[1]);	  	//
-    int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
-    int loop_time=atoi(argv[3]);	  	//the density of flow
-    float criteria_generate = 0.1;
-    int schematic=atoi(argv[4]);		//four method choose from input
-    int policy = atoi(argv[7]);
-    traffic MultiTraffic;
-    map<int, traffic_node*> traffic_tree;
-    vector<vector<int>> demand;
-    int refused = 0;
-    int refuseTime = 999999;
-    string methodName[4];
-    methodName[0]="Max_Hop_";
-    methodName[1]="Jump_Flow_";
-    methodName[2]="Load_Balance_";
-    methodName[3]="Alpha_beta_";
-    string total_flow = itos(flownumber * loop_time);
-    int PathCost[MULTIPLE][MAX_NODE][MAX_NODE];
-    int PathLength[MULTIPLE][MAX_NODE][MAX_NODE];
-    int ShortestPath[MULTIPLE][MAX_NODE][MAX_NODE];
-
-    string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
-    ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
-
-//----------------------------build up topology-----------------------------
-    number=PathCost_Input("topology.txt", 0, numberofnodes, PathCost);
-    if(number==-1) {
-        cout<<"Error reading topology"<<endl;
-        return -1;
-    }
-
-    calculate_path(0, numberofnodes, PathCost, PathLength, ShortestPath);
-
-    if(trafficdemand(demand)) {
-        cout<<"Error reading trafficdemand"<<endl;
-        return -1;
-    }
-
-    GenerateMulti(MultiTraffic,demand);
-    GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, policy);
-
-    //Handleflow
-
-//-----------------------------generate flows---------------------
-    for (int time = 0; time < loop_time; time++) {
-        switch(argv[6]) {
-        case 'uni':
-            Rand_Generation_Unicast(flownumber,numberofnodes,criteria_generate);
-        case 'multi':
-            Rand_Generation_Multicast(flownumber,numberofnodes,criteria_generate);
-        case 'hybird':
-            //not setup up yet
-        }
-    }
-//--------------------------processing loop per time step--------------------
-    for (iter_multimap iter = flow_setup.begin(); iter != flow_setup.end();) {
-
-        //iter_multimap iter_per_entry = flow_setup.find(iter->first);
-        list_size entry_num = flow_setup.count(iter->first);
-
-        //check switch time table
-        if (!atoi(argv[5]))  //argv[5] indicates whether the flow ends
-        {
-            entry_destroy(iter->first,numberofnodes);
-        }
-        flowtime = iter->first;
-
-
-        for (list_size entry_cnt = 0; entry_cnt != entry_num; ++entry_cnt,++iter) {
-
-            //flow parameter setting up, preparing for processing per flow
-            iter_vector iter_vector_per_entry = (iter->second).begin();
-            temp_flow.src = *iter_vector_per_entry;
-
-
-            iter_vector_per_entry++;
-            temp_flow.dst = *iter_vector_per_entry;
-
-            iter_vector_per_entry++;
-
-            temp_flow.end_time = *iter_vector_per_entry;
-            temp_flow.over_head = 0;
-            //processing per flow
-            route_request++; //here is the final result
-
-
-            /*here we want to calculate overhead_counter in another way*/
-            overhead_counter += temp_flow.over_head;
-        }
-
-        /***this part is reserved for future use
-                for (int i = 0; i<numberofnodes; i++)
-                {
-                    distribution[flowtime][i] = switch_data[i].cnt;
-
-                    if (switch_data[i].cnt == 0) {
-                        continue;
-                    }
-
-                    collection_usage_stage1(switch_data[i].cnt);
-                    collection_usage_stage2(switch_data[i].cnt);
-
-                    //k+=switch_data[i].cnt;
-
-                }
-        */
-
-
-        for (int i = 0; i < 105; i++) {
-            fout<<"arrival time is "<<i<<endl;
-            for (int j = 0; j < numberofnodes; j++) {
-                fout<<distribution[i][j]<<'\t';
-            }
-            fout<<endl;
-        }
-
-        fout.close();
-
-        cout<<"totally "<<flowentry_used<<" entries used"<<endl;
-        cout<<"entry destroyed "<<destroyed<<endl;
-        cout<<"refuse time"<<recordflow<<endl;
-        cout<<"control message overhead is "<<overhead_counter<<endl;
-        cout<<"Accepted flow num is "<<flownumber*loop_time - refused<<endl;
-        cout<<"Total route request is "<<route_request<<endl;
-    }
+void test ( vector <int> const &temp){
+    //temp.pop_back();
 }
+
+int main(int argc, char **argv) {
+    vector <int> temp{1,2,3,4,5};
+    test(temp);
+    for(int x : temp)   cout << x <<endl;
+    return 0;
+}
+
+
