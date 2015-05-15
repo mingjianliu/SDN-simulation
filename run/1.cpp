@@ -1,5 +1,3 @@
-#include "4.h"
-#include "GenerateMulti.h"
 #include <stdio.h>
 #include <vector>
 #include <map>
@@ -20,18 +18,14 @@ void test(vector< vector< int >> &temp) {
 
 int main(int argc, char **argv) {
 
-    traffic MultiTraffic;
-    vector< vector< int >> temp;
-    test(temp);
-    GenerateMulti(MultiTraffic, temp);
-
-    int[1][4][4] ShortestPath;
-    for( int i = 0 ; i < 4; ++i ) {
-        for(  int j = 0 ; j < 4; ++j ) {
-            ShortestPath[0][i][j] = j;
+    vector<vector< vector< int >>> temp(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
+    for( vector<vector <int>> z : temp){
+        cout << endl;
+        for( vector<int> x : z){
+            for( int y : x) cout << y;
+            cout <<endl;
         }
     }
-    map<int, traffic_node*> traffic_tree;
-    GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, 0);
     return 0;
 }
+

@@ -21,7 +21,7 @@ using namespace std;
 #define HOPS     2
 #define MAX_ENTRY 2000
 #define MEAN     10
-#define DURATION 10
+#define DURATIONTIME 10
 
 struct traffic_node {
     int label;
@@ -90,20 +90,6 @@ traffic_node* init_treenode(int number) {
     ret->label = number;
     return ret;
 }
-
-/* for source random number generator*/
-default_random_engine generator(0);
-uniform_int_distribution<int> uniform_dis(0,DURATIONTIME);
-uniform_int_distribution<int> generation(1,40);
-auto uni_generation = bind(generation,generator);
-auto uni_dis = bind(uniform_dis,generator);
-
-/* for destination random number generator*/
-default_random_engine generator(time(0));
-uniform_int_distribution<int> dstGeneration(1,50);
-uniform_int_distribution<int> durationGeneration(1,DURATION);
-auto uniRandn = bind(dstGeneration, generator);
-auto durationRandn = bind(durationGeneration, generator);
 
 string itos(int value) {
     stringstream stream;
@@ -534,43 +520,8 @@ vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int
 }
 
 //-------------------------------------------------------------------------------
-int poisson_dis(float criteria) {
-    float temp = float(uni_generation());
-    if (temp/40.0 < criteria) {
-        return 1;
-    }
-    else
-        return 0;
-}
-
-//-------------------------------------------------------------------------------
-vector <flows> Rand_Generation_Multicast(traffic &MultiTraffic, int flownumber, int numberofnodes, float criteria) {
-        vector <flows> result;
-        int flow_num = 0;
-        int time = 0;
-        while (flow_num < flownumber){
-            for(auto traffic_iter : MultiTraffic){ 
-		    if(poisson_dis(criteria_generate)){
-			flows currentFlow;
-			int src = traffic_iter->first;
-			destination tempDst;
-			destination dstPattern = traffic_iter->second;
-			for(vector<int>::iterator iter = dstPattern.begin(); iter != dstPattern.end();++iter){
-				if(float(uniRandn()/50.0) < criteria)
-					tempDst.push_back(*iter);
-			}  
-			int tempEndTime = durationRandn();
-			currentFlow.src = src;
-			currentFlow.dst = tempDst;
-			currentFlow.endtime = tempEndTime;
-			result.push_back(currentFlow);
-		    }
-		    ++flow_num;
-		    if(flow_num >= flownumber)  break;
-            }
-            ++time;
-        }
-        return result;
+int Rand_Generation_Multicast(traffic &MultiTraffic) {
+    return 0;
 }
 
 //-------------------------------------------------------------------------------
@@ -619,6 +570,7 @@ int main(int argc, char **argv) {
         cout<<"Error reading trafficdemand"<<endl;
         return -1;
     }
+
     GenerateMulti(MultiTraffic,demand);
     GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, 0);
 
@@ -627,12 +579,12 @@ int main(int argc, char **argv) {
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
         switch(atoi(argv[6])) {
-        case 0: //unicast
-            ;//Rand_Generation_Unicast(flownumber,numberofnodes,criteria_generate);
-        case 1: //multicast
-            Rand_Generation_Multicast(MultiTraffic, flownumber, numberofnodes, criteria_generate);
-        case 2: //unicast and multicast
-            ;//not setup up yet
+        case 0:
+            //Rand_Generation_Unicast(flownumber,numberofnodes,criteria_generate);
+        case 1:
+            Rand_Generation_Multicast(flownumber,numberofnodes,criteria_generate);
+        case 2:
+            //not setup up yet
         }
     }
 
