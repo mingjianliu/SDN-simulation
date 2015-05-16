@@ -307,7 +307,8 @@ int trafficdemand(vector<vector<int>> &demand) {
         char ch=getc(file);
         int n,i=0;
         for(int count=0; count<9609;)
-        {
+        {   
+            if(ch == EOF) break;
             if(ch =='\t') {
                 i++;
                 ch=getc(file);
@@ -368,27 +369,33 @@ void GenerateMulti(traffic &MultiTraffic, vector<vector<int>> &demand) {
 
 //-------------------------------------------------------------------------------
 void GenerateMulti_Tree(traffic &MultiTraffic, map<int, traffic_node*> &traffic_tree, vector <vector <vector <int>>> ShortestPath, int policy) {
+    int src;
     for (traffic_iter iter = MultiTraffic.begin(); iter != MultiTraffic.end(); iter++) {
 
-        traffic_node* root = init_treenode(iter->first);
+        traffic_node* root = new traffic_node();
+        root -> label = iter->first;
         traffic_tree.insert({iter->first, root});
+	src = iter->first;
 
         for(int destination: iter->second) {
             //Use DFS to insert every nodes from root
             traffic_node* node = root;
             //1. Get the shortest path
             vector<int> path;
-            int position = iter->first;
-            while(position != destination) {
-                path.push_back(position);
-                position = ShortestPath[policy][position][destination];
+
+            while(destination != src ) {
+                path.insert(path.begin(), destination);
+                destination = ShortestPath[policy][src][destination];
             }
 
             //2. Using vector path, traverse the tree
             for(int cur : path) {
                 auto temp = node->traffic_output.find(cur);
                 if( temp == node->traffic_output.end() ) {
-                    node->traffic_output.insert({cur,init_treenode(cur)});
+
+		    traffic_node* temp_node = new traffic_node();
+		    temp_node -> label = cur;
+                    node->traffic_output.insert({cur, temp_node});
                     temp = node->traffic_output.find(cur);
                 }
                 node = temp->second;
@@ -606,8 +613,8 @@ int main(int argc, char **argv) {
     vector<vector< vector< int >>> PathLength(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> ShortestPath(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     
-    string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
-    ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
+    //string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
+    //ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
 
 //----------------------------build up topology and traffic pattern-----------------------------
     number=Pathcost_Input("topology.txt", 0, numberofnodes, Pathcost);
@@ -625,16 +632,7 @@ int main(int argc, char **argv) {
     GenerateMulti(MultiTraffic,demand);
     GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, 0);
 
-// Output the result
-    return 0;
-}
-
-
-
-
-
     //Handleflow
-/*
     vector <vector <flows>> total_flows;
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
@@ -646,6 +644,11 @@ int main(int argc, char **argv) {
             total_flows[i].insert( total_flows[i].end(), temp[i].begin(), temp[i].end() );
         }
     }
+    //Try to print out flows numbers
+    int testnumber = 0;
+    cout << "Totally " << total_flows.size() << " time slots" <<endl;
+    for ( auto each : total_flows) testnumber += each.size();
+    cout << "Totally generated " << testnumber << " of flows" <<endl;
  
 // Handle all flows and collect the result
     Switches total_nodes (numberofnodes);
@@ -665,7 +668,16 @@ int main(int argc, char **argv) {
             }
         }
         if ( !atoi(argv[5]) ) total_nodes.Destroy(temp_time);
+        cout << " Time " << temp_time << " finished" << endl;
+        cout << "In time " << temp_time << ":\t" << cur_flow << " flows created\t" << cur_flow - refused << " flows accepted\t" << refused << " flows refused" << endl;
         ++temp_time;
-        cout << "In time " << temp_time << ":\t" << cur_flow << "flows created\t" << cur_flow - refused << "flows accepted\t" << refused << "flows refused" << endl;
     }
+// Output the result
+    return 0;
+}
+
+
+
+
+
 
