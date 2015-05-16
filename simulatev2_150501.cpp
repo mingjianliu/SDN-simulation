@@ -11,7 +11,6 @@
 #include <random>
 #include <functional>
 #include <sstream>
-//#include <algorithm>
 
 using namespace std;
 
@@ -20,7 +19,6 @@ using namespace std;
 #define MULTIPLE 3
 #define HOPS     2
 #define MAX_ENTRY 2000
-#define MEAN     10
 #define DURATION 10
 
 struct traffic_node {
@@ -93,13 +91,12 @@ traffic_node* init_treenode(int number) {
 
 /* for source random number generator*/
 default_random_engine generator(0);
-uniform_int_distribution<int> uniform_dis(0,DURATIONTIME);
+uniform_int_distribution<int> uniform_dis(0,DURATION);
 uniform_int_distribution<int> generation(1,40);
 auto uni_generation = bind(generation,generator);
 auto uni_dis = bind(uniform_dis,generator);
 
 /* for destination random number generator*/
-default_random_engine generator(time(0));
 uniform_int_distribution<int> dstGeneration(1,50);
 uniform_int_distribution<int> durationGeneration(1,DURATION);
 auto uniRandn = bind(dstGeneration, generator);
@@ -435,7 +432,13 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
     vector <int> result;
     if( schematic == 0 ) { //Maxhop
         for( unsigned i = 0; i < path.size(); ++i) {
-            if( i % HOPS == 0 || i == path.size() - 1 )    result.push_back( path.at(i) );
+            if( i % HOPS == 0 || i == path.size() - 1 ) {
+		    if( usage [ path.at(i) ] == 2000 ) {
+			result.clear();
+			return result;
+		    }
+		    result.push_back( path.at(i) );
+            }
         }
     }
     if( schematic == 1 ) {
@@ -465,8 +468,6 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
             if(positions>>i) result.push_back( path.at(i) );
         }
     }//Jumpflow
-    //check the result's nodes
-
 }
 
 //-------------------------------------------------------------------------------
@@ -500,6 +501,16 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
         path.push_back( root->label );
     } while( flow_setup.size() == 1 && destination.size() > 0 && loop ); //the loop is used to see whether there is any node stop in the middle
     //After quit it, we have 0 or multiple traffic nodes
+
+    //find path by vector path, save it into result
+    vector <int> temp = Findpath(path, schematic, usage);
+    if( temp.empty() ) {
+        result.clear();
+        return result;
+    } else {
+        result.insert( result.begin(), temp.begin(), temp.end() );
+    }
+
     if( flow_setup.size() >1 ) { //Recursively run it for all nodes
         for( auto iter_flow : flow_setup ) {
             vector < int > temp = Assign_Path( iter_flow.second, iter_flow.first, schematic, usage );
@@ -511,13 +522,6 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
         }
     }
 
-    //find path by vector path, save it into result
-    vector <int> temp = Findpath(path, schematic, usage);
-    if( temp.empty() ) {
-        result.clear();
-    } else {
-        result.insert( result.begin(), temp.begin(), temp.end() );
-    }
     return result;
 }
 
@@ -544,31 +548,33 @@ int poisson_dis(float criteria) {
 }
 
 //-------------------------------------------------------------------------------
-vector <flows> Rand_Generation_Multicast(traffic &MultiTraffic, int flownumber, int numberofnodes, float criteria) {
-        vector <flows> result;
+vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flownumber, int numberofnodes, float criteria, float criteria2) {
+        vector <vector <flows>> result;
         int flow_num = 0;
         int time = 0;
         while (flow_num < flownumber){
+            vector <flows> temp;
             for(auto traffic_iter : MultiTraffic){ 
-		    if(poisson_dis(criteria_generate)){
+		    if(poisson_dis(criteria)){
 			flows currentFlow;
-			int src = traffic_iter->first;
+			int src = traffic_iter.first;
 			destination tempDst;
-			destination dstPattern = traffic_iter->second;
+			destination dstPattern = traffic_iter.second;
 			for(vector<int>::iterator iter = dstPattern.begin(); iter != dstPattern.end();++iter){
-				if(float(uniRandn()/50.0) < criteria)
+				if(float(uniRandn()/50.0) < criteria2)
 					tempDst.push_back(*iter);
 			}  
 			int tempEndTime = durationRandn();
 			currentFlow.src = src;
 			currentFlow.dst = tempDst;
 			currentFlow.endtime = tempEndTime;
-			result.push_back(currentFlow);
+			temp.push_back(currentFlow);
 		    }
 		    ++flow_num;
 		    if(flow_num >= flownumber)  break;
             }
             ++time;
+            result.push_back(temp);
         }
         return result;
 }
@@ -582,31 +588,28 @@ int main(int argc, char **argv) {
     int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
     int loop_time=atoi(argv[3]);	  	//the density of flow
     float criteria_generate = 0.1;
+    float criteria_dest = 0.5; 
     int schematic=atoi(argv[4]);		//four method choose from input
-    //int policy = atoi(argv[7]);
     traffic MultiTraffic;
     map<int, traffic_node*> traffic_tree;
     vector<vector<int>> demand;
     int refused = 0;
     int refuseTime = 999999;
+    int cur_flow = 0;
     string methodName[4];
     methodName[0]="Max_Hop_";
     methodName[1]="Jump_Flow_";
     methodName[2]="Load_Balance_";
     methodName[3]="Alpha_beta_";
     string total_flow = itos(flownumber * loop_time);
-    //int Pathcost[MULTIPLE][MAX_NODE][MAX_NODE];
-    //int PathLength[MULTIPLE][MAX_NODE][MAX_NODE];
-    //int ShortestPath[MULTIPLE][MAX_NODE][MAX_NODE];
-    //    vector<vector< vector< int >>> temp(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> Pathcost(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> PathLength(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> ShortestPath(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     
-    string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
-    ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
+    //string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
+    //ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
 
-//----------------------------build up topology-----------------------------
+//----------------------------build up topology and traffic pattern-----------------------------
     number=Pathcost_Input("topology.txt", 0, numberofnodes, Pathcost);
     if(number==-1) {
         cout<<"Error reading topology"<<endl;
@@ -622,19 +625,47 @@ int main(int argc, char **argv) {
     GenerateMulti(MultiTraffic,demand);
     GenerateMulti_Tree(MultiTraffic,traffic_tree, ShortestPath, 0);
 
-    //Handleflow
+// Output the result
+    return 0;
+}
 
+
+
+
+
+    //Handleflow
+/*
+    vector <vector <flows>> total_flows;
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
-        switch(atoi(argv[6])) {
-        case 0: //unicast
-            ;//Rand_Generation_Unicast(flownumber,numberofnodes,criteria_generate);
-        case 1: //multicast
-            Rand_Generation_Multicast(MultiTraffic, flownumber, numberofnodes, criteria_generate);
-        case 2: //unicast and multicast
-            ;//not setup up yet
+        vector <vector <flows>> temp = Rand_Generation_Multicast(MultiTraffic, flownumber, numberofnodes, criteria_generate, criteria_dest);
+        if ( temp.size() > total_flows.size() ){
+            total_flows.resize( temp.size() );
+        }
+        for ( int i = 0; i < temp.size(); ++i ){
+            total_flows[i].insert( total_flows[i].end(), temp[i].begin(), temp[i].end() );
         }
     }
+ 
+// Handle all flows and collect the result
+    Switches total_nodes (numberofnodes);
+    vector <int> usage = total_nodes.Usage();    
+    int temp_time = 0;   
+    for ( auto each_time : total_flows ) {
+        for (auto each_flow : each_time) {
+            ++cur_flow;
+            vector <int> temp_path = Handle_Flow ( each_flow, traffic_tree, schematic, usage); 
+            if ( temp_path.empty() ) {
+                ++refused;
+                if ( refuseTime == 999999 )  refuseTime = temp_time;
+            } else {
+                total_nodes.Insert(temp_time, temp_path);
+                usage = total_nodes.Usage();
+                
+            }
+        }
+        if ( !atoi(argv[5]) ) total_nodes.Destroy(temp_time);
+        ++temp_time;
+        cout << "In time " << temp_time << ":\t" << cur_flow << "flows created\t" << cur_flow - refused << "flows accepted\t" << refused << "flows refused" << endl;
+    }
 
-
-}

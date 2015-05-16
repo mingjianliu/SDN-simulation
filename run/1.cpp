@@ -17,15 +17,15 @@ void test(vector< vector< int >> &temp) {
 }
 
 int main(int argc, char **argv) {
-
-    vector<vector< vector< int >>> temp(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
-    for( vector<vector <int>> z : temp){
-        cout << endl;
-        for( vector<int> x : z){
-            for( int y : x) cout << y;
-            cout <<endl;
-        }
-    }
+    vector <vector <int>> temp;
+    vector <int> temp1(3, 0);
+    for ( int i = 0; i<3; ++i)  temp.push_back(temp1);
+    vector <int> temp2{1,2,3,4,5};
+    temp.resize(5);
+    temp[4].insert(temp[4].end(), temp2.begin(), temp2.end());
+    for (int number : temp[4])
+        cout << number << "\t";
+    cout <<endl; 
     return 0;
 }
 
