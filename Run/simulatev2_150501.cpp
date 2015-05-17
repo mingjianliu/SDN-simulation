@@ -14,7 +14,6 @@
 
 using namespace std;
 
-#define MAX_NODE 512
 #define MAX_NUM  1000
 #define MULTIPLE 3
 #define HOPS     2
@@ -53,31 +52,27 @@ public:
     void Destroy( int time ) {
         unsigned int number = 0;
         for(int i = 0; i < switch_size; ++i) {
-            for(auto iter : temp2[i]) {
-                if (iter.first > time) {
-                    break;
-                }
-                number += iter.second;
-                count[i] -= iter.second;
-                temp2[i].erase (iter.first);
-            }
+            auto iter = temp2[i].find(time);
+            if ( iter == temp2[i].end() )  continue;
+            number += iter->second;
+            count[i] -= iter->second;
+            temp2[i].erase(iter);
         }
         total -= number;
     }
-    void Insert( int time, vector <int> nodes ) {
+    void Insert( int time, vector <int> nodes, int endtime ) {
         total += nodes.size();
         for(int node : nodes) {
             count[node]++;
-            auto iter = temp2[node].find(time);
+            auto iter = temp2[node].find(endtime);
             if( iter == temp2[node].end() ) {
-                temp2[node].insert({time, 1});
+                temp2[node].insert({endtime, 1});
             } else {
                 iter->second++;
             }
         }
         return;
     }
-
 private:
     unsigned int switch_size;
     map < int, int >* temp2; //key = time, value = entry number
@@ -227,8 +222,8 @@ int Pathcost_Input(const char* filename,const int policy, const int number, vect
 
 ------------------------------------------------------------------------*/
 void calculate_path(int policy, int number, vector <vector <vector <int>>> &Pathcost, vector <vector <vector <int>>> &PathLength , vector <vector <vector <int>>> &ShortestPath) {
-    int tmp[MAX_NODE][MAX_NODE];
-    int tmp2[MAX_NODE][MAX_NODE];
+    int tmp[number][number];
+    int tmp2[number][number];
     for (int i=0; i<number; i++) {
         for (int j=0; j<number; j++) {
             if(i==j) {
@@ -416,7 +411,7 @@ double path_cost2(vector<int> const &path, int positions, vector <int> const &us
         if ( ! (test) )
             continue;
 
-        int node_usage = usage[ path[length - 1 - i] ];
+        int node_usage = usage[ path[i] ];
 
         if(node_usage<333*2) {
             costx+=0.01;
@@ -440,7 +435,7 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
     if( schematic == 0 ) { //Maxhop
         for( unsigned i = 0; i < path.size(); ++i) {
             if( i % HOPS == 0 || i == path.size() - 1 ) {
-		    if( usage [ path.at(i) ] == 2000 ) {
+		    if( usage [ path.at(i) ] == MAX_ENTRY ) {
 			result.clear();
 			return result;
 		    }
@@ -471,10 +466,12 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
                 positions = i;
             }
         }
+        if (cost = 999999.99) return result;
         for( int i=1; i <= path.size(); ++i) {
             if(positions>>i) result.push_back( path.at(i) );
         }
     }//Jumpflow
+    return result;
 }
 
 //-------------------------------------------------------------------------------
@@ -567,18 +564,21 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
 			int src = traffic_iter.first;
 			destination tempDst;
 			destination dstPattern = traffic_iter.second;
-			for(vector<int>::iterator iter = dstPattern.begin(); iter != dstPattern.end();++iter){
-				if(float(uniRandn()/50.0) < criteria2)
-					tempDst.push_back(*iter);
+			for (int iter : dstPattern) {
+				if(float(uniRandn()/50.0) > criteria2)
+					tempDst.push_back(iter);
 			}  
-			int tempEndTime = durationRandn();
-			currentFlow.src = src;
-			currentFlow.dst = tempDst;
-			currentFlow.endtime = tempEndTime;
-			temp.push_back(currentFlow);
+                        if (tempDst.size()>0) {
+			    int tempEndTime = durationRandn();
+			    currentFlow.src = src;
+			    currentFlow.dst = tempDst;
+			    currentFlow.endtime = tempEndTime;
+			    temp.push_back(currentFlow);
+			    ++flow_num;
+                        } 
+                    
 		    }
-		    ++flow_num;
-		    if(flow_num >= flownumber)  break;
+                    if (flow_num >= flownumber) break;
             }
             ++time;
             result.push_back(temp);
@@ -595,7 +595,7 @@ int main(int argc, char **argv) {
     int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
     int loop_time=atoi(argv[3]);	  	//the density of flow
     float criteria_generate = 0.1;
-    float criteria_dest = 0.5; 
+    float criteria_dest = 0; 
     int schematic=atoi(argv[4]);		//four method choose from input
     traffic MultiTraffic;
     map<int, traffic_node*> traffic_tree;
@@ -613,9 +613,8 @@ int main(int argc, char **argv) {
     vector<vector< vector< int >>> PathLength(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> ShortestPath(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     
-    //string filename = methodName[schematic] + "_flow_number_" + total_flow + ".txt";
-    //ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
-
+    string filename = methodName[schematic] + total_flow + ".txt";
+    ofstream fout(filename.c_str(),ofstream::out | ofstream::app);
 //----------------------------build up topology and traffic pattern-----------------------------
     number=Pathcost_Input("topology.txt", 0, numberofnodes, Pathcost);
     if(number==-1) {
@@ -649,7 +648,7 @@ int main(int argc, char **argv) {
     cout << "Totally " << total_flows.size() << " time slots" <<endl;
     for ( auto each : total_flows) testnumber += each.size();
     cout << "Totally generated " << testnumber << " of flows" <<endl;
- 
+    int deleted_flow = 0;
 // Handle all flows and collect the result
     Switches total_nodes (numberofnodes);
     vector <int> usage = total_nodes.Usage();    
@@ -662,16 +661,27 @@ int main(int argc, char **argv) {
                 ++refused;
                 if ( refuseTime == 999999 )  refuseTime = temp_time;
             } else {
-                total_nodes.Insert(temp_time, temp_path);
+                total_nodes.Insert(temp_time, temp_path, temp_time + each_flow.endtime);
                 usage = total_nodes.Usage();
                 
             }
+            //fout << "flow " << cur_flow << "starts at " << temp_time << " , ends at " << temp_time + each_flow.endtime << endl;
+            //for ( int x : each_flow.dst ) cout<< x << "\t";
         }
-        if ( !atoi(argv[5]) ) total_nodes.Destroy(temp_time);
-        cout << " Time " << temp_time << " finished" << endl;
-        cout << "In time " << temp_time << ":\t" << cur_flow << " flows created\t" << cur_flow - refused << " flows accepted\t" << refused << " flows refused" << endl;
+        int total_bef = total_nodes.Total_Usage();
+        if ( !atoi(argv[5]) ){  
+            total_nodes.Destroy(temp_time);
+            usage = total_nodes.Usage();
+        }
+        int total_aft = total_nodes.Total_Usage();
+        deleted_flow = total_bef - total_aft ; 
+        fout << "In time " << temp_time << ":\t" << cur_flow << " flows created\t" << cur_flow - refused << " flows accepted\t" << refused << " flows refused\t" << deleted_flow << " flows deleted\t" << total_aft << " in switches\t" << endl;
         ++temp_time;
+        cur_flow = 0;
+        refused = 0;
     }
+    cout << "refuse time is " << refuseTime << endl;
+    fout.close();
 // Output the result
     return 0;
 }
