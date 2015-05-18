@@ -466,7 +466,7 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
                 positions = i;
             }
         }
-        if (cost = 999999.99) return result;
+        if (cost == 999999.99) return result;
         for( int i=1; i <= path.size(); ++i) {
             if(positions>>i) result.push_back( path.at(i) );
         }

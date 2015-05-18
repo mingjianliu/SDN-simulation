@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS     3
+#define HOPS     3 
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -92,12 +92,12 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
     if( schematic == 0 ) { //Maxhop
         for( unsigned i = 0; i < path.size(); ++i) {
             if( i % HOPS == 0 || i == path.size() - 1 ) {
-                if( usage [ path[i] ] >= MAX_ENTRY ) {
-                    result.clear();
-                    return result;
-                }
-                result.push_back( path.at(i) );
-                ++temp_usage[ path[i] ];
+		    if( usage [ path[i] ] >= MAX_ENTRY ) {
+			result.clear();
+			return result;
+		    }
+		    result.push_back( path.at(i) );
+                    ++temp_usage[ path[i] ];
             }
         }
     }
@@ -107,11 +107,10 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
         int length = path.size();
         int range = myPow( 2, length );
         for( int i=myPow( 2, length-1 ); i< range; ++i ) {
-            cout << "Finding " << i <<endl;
-            if( ! (i&1) ) {
-                cout << i << " failed" <<endl;
-                continue;
-            }
+            if( ! (i%2) ){
+             continue;
+             cout << i << " failed" <<endl;        
+ }
             int temp_number = i;
             int count = 0;
             while(temp_number && count < HOPS) {
@@ -119,25 +118,20 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
                 else ++count;
                 temp_number = temp_number >> 1;
             }
-            if( count >= HOPS ) {
-                cout << i << " failed" <<endl;
-                continue;
-            }
+            if( count >= HOPS ){ continue;
+             cout << i << " failed" <<endl;        
+}
             temp_cost=path_cost2(path, i, usage);
             if( cost>temp_cost ) {
                 cost=temp_cost;
-                cout << "Cost is " << cost << endl;
                 positions = i;
             }
         }
-        if (cost == 999999.99) {
-            cout << " failed" <<endl;
-            return result;
-        }
-        cout << "Position is " << positions << endl;
+        if (cost = 999999.99){ return result;
+             cout << i << " failed" <<endl;        
+}
         for( int i=1; i <= path.size(); ++i) {
-            if(positions & 1) result.push_back( path.at(i-1) );
-            positions = positions >> 1;
+            if(positions>>i) result.push_back( path.at(i) );
         }
     }//Jumpflow
     usage = temp_usage;
@@ -212,11 +206,11 @@ vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int
 }
 
 int main(int argc, char **argv) {
-    vector <int> usage {2, 2000, 0};
+    vector <int> usage{2, 2000, 0};
     int positions = 7;
-    vector <int> path {0,1,2};
+    vector <int> path{0,1,2};
     vector <int> result = Findpath(path, 1, usage);
-    for ( int temp : result ) {
+    for ( int temp : result ){
         cout << temp << endl;
     }
     return 0;
