@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS     3
+#define HOPS     1
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -145,20 +145,23 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
 }
 
 //-------------------------------------------------------------------------------
-vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int schematic, vector <int> &usage) {
-
+vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int schematic, vector <int> &usage, vector <vector <vector <int>>> ShortestPath) {
+    int src = root -> label;
     vector <int> result;
     vector <int> path;
     map < traffic_node*, vector <int> > flow_setup;
     bool loop = true;
+    traffic_node* cur_src = root;
     do {
         loop = true;
         flow_setup.clear();
         vector <int> temp_dest = destination;
         destination.clear();
+
         for(int temp : temp_dest) {
-            auto temp_node = (root->traffic_output).find(temp);
-            if ( temp_node == ( root->traffic_output ).end() ) { //if the traffic stop here, skip it
+            auto temp_node = (cur_src->traffic_output).find(ShortestPath[0][src][temp]);
+            cout << "Find from src " << src << " to dest " << temp << ", the next hop is " << ShortestPath[0][src][temp] << endl;
+            if ( temp_node == ( cur_src->traffic_output ).end() || temp == ShortestPath[0][src][temp] ) { //if the traffic stop here, skip it
                 loop = false;
                 continue;
             }
@@ -167,12 +170,17 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
             auto iter = flow_setup.find(temp_node->second);
             if ( iter == flow_setup.end() ) {
                 vector <int> temp1 { temp };
+                cout << temp << endl;
                 flow_setup.insert({ temp_node->second, temp1 });
             } else {
                 iter->second.push_back( temp );
             }
         }
+        src = flow_setup.begin()->first->label;
+        cout << "Now the src is changed to " << src << endl;
         path.push_back( root->label );
+        cur_src = flow_setup.begin()->first; 
+        cout << "Flow_setup size is " << flow_setup.size() << endl;
     } while( flow_setup.size() == 1 && destination.size() > 0 && loop ); //the loop is used to see whether there is any node stop in the middle
     //After quit it, we have 0 or multiple traffic nodes
 
@@ -184,40 +192,80 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
     } else {
         result.insert( result.begin(), temp.begin(), temp.end() );
     }
+    //for (int x : result)  cout << x <<endl;
 
     if( flow_setup.size() >1 ) { //Recursively run it for all nodes
         for( auto iter_flow : flow_setup ) {
-            vector < int > temp = Assign_Path( iter_flow.second, iter_flow.first, schematic, usage );
+            vector < int > temp = Assign_Path( iter_flow.second, iter_flow.first, schematic, usage, ShortestPath );
             if ( temp.empty() ) {
                 result.clear();
                 return result;
             }
-            result.insert( result.end(), temp.begin(), temp.end() );
+            for( int x : temp) cout << "Other branch " << x;
+            cout << endl;
+            result.insert( result.begin(), temp.begin(), temp.end() );
+	    //for (int x : result)  cout << x <<endl;
         }
     }
-
     return result;
 }
 
 //-------------------------------------------------------------------------------
-vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int schematic, vector <int> &usage) {
+vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int schematic, vector <int> &usage, vector <vector <vector <int>>> ShortestPath) {
 //We need to add endtime to all context switches later
     map<int, traffic_node*>::iterator temp = traffic_tree.find(flow.src);
     if( temp == traffic_tree.end() ) {
         vector<int> temp;
         return temp;
     } else {
-        return Assign_Path(flow.dst,temp->second, schematic, usage);
+        return Assign_Path(flow.dst,temp->second, schematic, usage, ShortestPath);
     }
 }
 
 int main(int argc, char **argv) {
+    map<int, traffic_node*> tree;
+    vector <vector <int>> ShortestPath(3, vector< int >(3, 0));
+    ShortestPath[0][2] = 1;
+    ShortestPath[1][2] = 2;
+    ShortestPath[2][2] = 2;
+    vector <vector < vector <int>>> xxx;
+    xxx.push_back(ShortestPath);
+    traffic_node* temp = new traffic_node();
+    temp->label = 0;    
+    tree.insert({0, temp});
+
+    traffic_node* temp1 = new traffic_node();
+    temp1->label = 1;
+    temp->traffic_output.insert({1, temp1});
+    
+    traffic_node* temp2 = new traffic_node();
+    temp2->label = 2;
+    temp1->traffic_output.insert({2, temp2});
+
     vector <int> usage {2, 2000, 0};
-    int positions = 7;
+    //int positions = 7;
     vector <int> path {0,1,2};
-    vector <int> result = Findpath(path, 1, usage);
-    for ( int temp : result ) {
-        cout << temp << endl;
+    //vector <int> result = Findpath(path, 1, usage);
+    vector <int> destination{2};
+    vector <int> result = Assign_Path(destination, temp, 0, usage, xxx);
+    cout << "Final result length is " << result.size() << endl;
+    for ( int x : result ) {
+        cout << x << "\t";
     }
+    cout << endl;
     return 0;
 }
+
+/*
+        //cout << "Find all maps here "<< endl;
+        //cout << "Node is " << root->label << endl; 
+        //traffic_node* root1;
+        //for( auto iter : root->traffic_output ){ cout << iter.first << "\t"  << endl;
+        //cout << "--------------------------"<< endl;
+        //root1 = iter.second;}
+
+        //cout << "Find all maps here "<< endl;
+        //cout << "Node is " << root1->label << endl; 
+        //for( auto iter : root1->traffic_output ) cout << iter.first << "\t"  << endl;
+        //cout << "--------------------------"<< endl;
+*/

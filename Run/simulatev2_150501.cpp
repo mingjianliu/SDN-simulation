@@ -476,8 +476,8 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
 }
 
 //-------------------------------------------------------------------------------
-vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int schematic, vector <int> &usage) {
-
+vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int schematic, vector <int> &usage, vector <vector <vector <int>>> ShortestPath) {
+    int src = root -> label; 
     vector <int> result;
     vector <int> path;
     map < traffic_node*, vector <int> > flow_setup;
@@ -488,9 +488,10 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
         vector <int> temp_dest = destination;
         destination.clear();
         for(int temp : temp_dest) {
-            auto temp_node = (root->traffic_output).find(temp);
+            auto temp_node = (root->traffic_output).find(Shortest[0][src][temp]);
             if ( temp_node == ( root->traffic_output ).end() ) { //if the traffic stop here, skip it
                 loop = false;
+                cout << "Haven't found node " << temp << endl;
                 continue;
             }
             destination.push_back(temp);
@@ -531,14 +532,14 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
 }
 
 //-------------------------------------------------------------------------------
-vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int schematic, vector <int> &usage) {
+vector<int> Handle_Flow (flows &flow, map<int, traffic_node*> &traffic_tree, int schematic, vector <int> &usage, vector <vector <vector <int>>> ShortestPath) {
 //We need to add endtime to all context switches later
     map<int, traffic_node*>::iterator temp = traffic_tree.find(flow.src);
     if( temp == traffic_tree.end() ) {
         vector<int> temp;
         return temp;
     } else {
-        return Assign_Path(flow.dst,temp->second, schematic, usage);
+        return Assign_Path(flow.dst,temp->second, schematic, usage, ShortestPath);
     }
 }
 
@@ -565,11 +566,11 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
                 int src = traffic_iter.first;
                 destination tempDst;
                 destination dstPattern = traffic_iter.second;
-                //for (int iter : dstPattern) {
-                //		if(float(uniRandn()/50.0) > criteria2)
-                //			tempDst.push_back(iter);
-                //	}
-                tempDst.push_back(dstPattern[0]);
+                for (int iter : dstPattern) {
+                		if(float(uniRandn()/50.0) > criteria2)
+                			tempDst.push_back(iter);
+                	}
+                //tempDst.push_back(dstPattern[0]);
 
                 if (tempDst.size()>0) {
                     int tempEndTime = durationRandn();
