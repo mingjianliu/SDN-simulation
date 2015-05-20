@@ -448,7 +448,9 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
         int length = path.size();
         int range = myPow( 2, length );
         for( int i=myPow( 2, length-1 ); i< range; ++i ) {
+            cout << "Finding " << i <<endl;
             if( ! (i&1) ) {
+                cout << i << " failed" <<endl;
                 continue;
             }
             int temp_number = i;
@@ -459,17 +461,21 @@ vector <int> Findpath(vector <int> const & path, int const schematic, vector <in
                 temp_number = temp_number >> 1;
             }
             if( count >= HOPS ) {
+                cout << i << " failed" <<endl;
                 continue;
             }
             temp_cost=path_cost2(path, i, usage);
             if( cost>temp_cost ) {
                 cost=temp_cost;
+                cout << "Cost is " << cost << endl;
                 positions = i;
             }
         }
         if (cost == 999999.99) {
+            cout << " failed" <<endl;
             return result;
         }
+        cout << "Position is " << positions << endl;
         for( int i=1; i <= path.size(); ++i) {
             if(positions & 1) result.push_back( path.at(i-1) );
             positions = positions >> 1;
@@ -497,6 +503,7 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
     traffic_node* cur_src = root;
     do {
 
+        cout << "------------------ A new iteration--------------- " << endl;
         src = cur_src->label;
         loop = true;
         flow_setup.clear();
@@ -506,37 +513,52 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
 
         for(int temp : temp_dest) {
             int nexthop = findNexthop (src, temp, ShortestPath);
+            cout << endl<< "Handling node " << temp << endl;
             auto temp_node = (cur_src->traffic_output).find(nexthop);
+            cout << "Find from src " << src << " to dest " << temp << ", the next hop is " << nexthop << endl;
             if ( temp == cur_src->label ) { //if the traffic stop here, skip it
                 loop = false;
+                cout << "The destination is just here: node " << temp << endl;
                 //if there is only one destination, we need to push temp into 
                 continue;
             }
 
             destination.push_back ( temp );
+            cout << " test" << endl;
+            if ( temp_node == (cur_src->traffic_output).end() ) cout << "Haven't found the node " << endl;
             //Here we insert the key=node pointer, value=next node's label to map
             auto iter = flow_setup.find(temp_node->second);
             if ( iter == flow_setup.end() ) {
                 vector <int> temp1 { temp };
                 flow_setup.insert({ temp_node->second, temp1 });
+                cout << "Inserting " << temp_node->second->label << "to " << temp << " into the map 1" << endl;
             } else {
                 iter->second.push_back( temp );
+                cout << "Inserting " << temp << " into the map 2" << endl;
             }
 
         }
         
+        cout << "test"<<endl;
         if(flow_setup.size() == 0) break;
         cur_src = (flow_setup.begin())->first; 
 
+        cout << "Now the src is changed to " << src << endl;
+        cout << "Flow_setup size is " << flow_setup.size() << endl;
+        cout << "Destination size is " << destination.size() << endl;
 
 
     } while( flow_setup.size() == 1 && destination.size() > 0 && loop ); //the loop is used to see whether there is any node stop in the middle
     //After quit it, we have 0 or multiple traffic nodes
 
     //find path by vector path, save it into result
+    cout << "Finished the loop. Now find the path: \t";
+    for (int i : path)  cout << i << "\t"; 
+    cout << endl;
     vector <int> temp = Findpath(path, schematic, usage);
     if( temp.empty() ) {
         result.clear();
+        cout << "Find path failed" << endl;
         return result;
     } else {
         result.insert( result.begin(), temp.begin(), temp.end() );
@@ -548,8 +570,11 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
             vector < int > temp = Assign_Path( iter_flow.second, iter_flow.first, schematic, usage, ShortestPath );
             if ( temp.empty() ) {
                 result.clear();
+		cout << "Find other path failed" << endl;
                 return result;
             }
+            for( int x : temp) cout << "Other branch " << x;
+            cout << endl;
             result.insert( result.begin(), temp.begin(), temp.end() );
         }
     }
@@ -624,7 +649,7 @@ int main(int argc, char **argv) {
     int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
     int loop_time=atoi(argv[3]);	  	//the density of flow
     float criteria_generate = 0.1;
-    float criteria_dest = 0.5;
+    float criteria_dest = 0.3;
     int schematic=atoi(argv[4]);		//four method choose from input
     traffic MultiTraffic;
     map<int, traffic_node*> traffic_tree;
@@ -661,7 +686,6 @@ int main(int argc, char **argv) {
     cout << "Totally src number is " << traffic_tree.size() << endl ;
     //Handleflow
     vector <vector <flows>> total_flows;
-
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
         vector <vector <flows>> temp = Rand_Generation_Multicast(MultiTraffic, flownumber, numberofnodes, criteria_generate, criteria_dest);
@@ -677,16 +701,6 @@ int main(int argc, char **argv) {
     cout << "Totally " << total_flows.size() << " time slots" <<endl;
     for ( auto each : total_flows) testnumber += each.size();
     cout << "Totally generated " << testnumber << " of flows" <<endl;
-    int source_number = 0;
-    int destination_number = 0;
-    for ( auto x1 : total_flows ) {
-        for ( auto x2 : x1 ) {
-            ++source_number;
-            destination_number += x2.dst.size();
-        }
-    }
-
-    cout << "Source number is " << source_number << ", and destination number is " << destination_number << endl;
     int deleted_flow = 0;
 // Handle all flows and collect the result
     Switches total_nodes (numberofnodes);
@@ -726,7 +740,6 @@ int main(int argc, char **argv) {
         //fout <<endl;
         //fout << temp_dest << "\t" << cur_flow <<endl;
         destinations += temp_dest;
-        cout << " Finished the " << temp_time << " iteration" << endl;
         ++temp_time;
         cur_flow = 0;
         refused = 0;

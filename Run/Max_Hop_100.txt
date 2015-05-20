@@ -1,0 +1,5 @@
+In time 0:	25 flows created	25 flows accepted	0 flows refused	0 flows deleted	1123 in switches	
+In time 1:	25 flows created	25 flows accepted	0 flows refused	0 flows deleted	2293 in switches	
+In time 2:	27 flows created	27 flows accepted	0 flows refused	0 flows deleted	3541 in switches	
+In time 3:	19 flows created	19 flows accepted	0 flows refused	0 flows deleted	4438 in switches	
+In time 4:	4 flows created	4 flows accepted	0 flows refused	0 flows deleted	4579 in switches	
