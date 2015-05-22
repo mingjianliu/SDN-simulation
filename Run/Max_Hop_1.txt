@@ -1,2 +1,0 @@
-In time 0:	1 flows created	1 flows accepted	0 flows refused	0 flows deleted	26 in switches	
-In time 0:	1 flows created	1 flows accepted	0 flows refused	0 flows deleted	26 in switches	

@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS     1
+#define HOPS    1 
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -726,9 +726,9 @@ int main(int argc, char **argv) {
         //fout <<endl;
         //fout << temp_dest << "\t" << cur_flow <<endl;
         destinations += temp_dest;
-        cout << " Finished the " << temp_time << " iteration" << endl;
+        //cout << " Finished the " << temp_time << " iteration" << endl;
         ++temp_time;
-        cur_flow = 0;
+        //cur_flow = 0;
         refused = 0;
     }
     cout << "There are totally " << destinations << " entry"<<endl;

@@ -1,1 +1,0 @@
-In time 0:	10 flows created	10 flows accepted	0 flows refused	0 flows deleted	499 in switches	
