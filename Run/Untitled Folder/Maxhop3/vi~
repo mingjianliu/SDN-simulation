@@ -1,0 +1,18 @@
+$ vi ginfo
+#
+#
+# Script to print user information who currently login , current date & time
+#
+clear
+
+# bash until loop
+for (( i = 1000; i<=10000; i+=1000)) do
+        ./1.out $i 512 10 1 0
+        ./1.out $i 512 10 0 0
+done 
+
+for (( i = 1000; i<=10000; i+=1000)) do
+        ./1.out $i 512 10 1 1
+        ./1.out $i 512 10 0 1
+done 
+exit 0
