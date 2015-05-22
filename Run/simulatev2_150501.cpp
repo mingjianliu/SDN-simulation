@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS    3
+#define HOPS    1
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -602,7 +602,7 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
                 //}
 
                 //uniform distribution
-                int number = uniRandn();
+                int number = uni();
                 for ( int i = 0; i < number; ++i) {
                     tempDst.push_back(dstPattern[i]);
                 }
