@@ -509,7 +509,7 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
             auto temp_node = (cur_src->traffic_output).find(nexthop);
             if ( temp == cur_src->label ) { //if the traffic stop here, skip it
                 loop = false;
-                //if there is only one destination, we need to push temp into
+                //if there is only one destination, we need to push temp into 
                 continue;
             }
 
@@ -524,9 +524,9 @@ vector <int> Assign_Path(vector <int> &destination, traffic_node* root, int sche
             }
 
         }
-
+        
         if(flow_setup.size() == 0) break;
-        cur_src = (flow_setup.begin())->first;
+        cur_src = (flow_setup.begin())->first; 
 
 
 
@@ -583,7 +583,7 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
     vector <vector <flows>> result;
     int flow_num = 0;
     int time = 0;
-
+    
     while (flow_num < flownumber) {
         vector <flows> temp;
         for(auto traffic_iter : MultiTraffic) {
@@ -593,20 +593,20 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
                 destination tempDst;
                 destination dstPattern = traffic_iter.second;
 
-                uniform_int_distribution<int> dstGeneration1(1, dstPattern.size());
-                auto uni = bind(dstGeneration1, generator);
+    uniform_int_distribution<int> dstGeneration1(1, dstPattern.size());
+    auto uni = bind(dstGeneration1, generator);
                 //standard distribution
                 //for (int iter : dstPattern) {
                 // 	if(float(uniRandn()/50.0) > criteria2)
                 //		tempDst.push_back(iter);
                 //}
-
+   
                 //uniform distribution
                 int number = uniRandn();
                 for ( int i = 0; i < number; ++i) {
                     tempDst.push_back(dstPattern[i]);
                 }
-
+                
                 //unicast
                 //tempDst.push_back(dstPattern[0]);
 
