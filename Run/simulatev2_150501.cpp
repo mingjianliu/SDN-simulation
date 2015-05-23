@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS    1
+#define HOPS    3
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -695,7 +695,7 @@ int main(int argc, char **argv) {
     for ( auto x1 : total_flows ) {
         for ( auto x2 : x1 ) {
             ++source_number;
-            destination_number += x2.dst.size();
+            destination_number += (x2.dst).size();
         }
     }
 
