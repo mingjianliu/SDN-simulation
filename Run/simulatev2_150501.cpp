@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS    3
+#define HOPS   3
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -79,7 +79,7 @@ private:
 };
 
 /* for source random number generator*/
-default_random_engine generator(0);
+default_random_engine generator(time(NULL));
 uniform_int_distribution<int> uniform_dis(0,DURATION);
 uniform_int_distribution<int> generation(1,40);
 auto uni_generation = bind(generation,generator);
@@ -584,6 +584,7 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
     int flow_num = 0;
     int time = 0;
 
+
     while (flow_num < flownumber) {
         vector <flows> temp;
         for(auto traffic_iter : MultiTraffic) {
@@ -592,18 +593,22 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
                 int src = traffic_iter.first;
                 destination tempDst;
                 destination dstPattern = traffic_iter.second;
-
-                uniform_int_distribution<int> dstGeneration1(1, dstPattern.size());
-                auto uni = bind(dstGeneration1, generator);
+                //int number = 0;
                 //standard distribution
                 //for (int iter : dstPattern) {
-                // 	if(float(uniRandn()/50.0) > criteria2)
-                //		tempDst.push_back(iter);
+                // 	if(float(uniRandn()/50.0) > criteria2) {
+               // 		tempDst.push_back(iter);
+                //                ++ number;
+                //        }
+                //        if ( number >= 5) break;
                 //}
 
                 //uniform distribution
+                uniform_real_distribution<double> dstGeneration1(0, dstPattern.size());
+                auto uni = bind(dstGeneration1, generator);
                 int number = uni();
                 for ( int i = 0; i < number; ++i) {
+                    if (i >= dstPattern.size() ) break;
                     tempDst.push_back(dstPattern[i]);
                 }
 

@@ -7,7 +7,7 @@ clear
 
 # bash until loop
 
-        ./Maxhop.out 2000 512 50 1 1
-        ./Maxhop.out 2000 512 50 0 1
-        ./Openflow.out 2000 512 50 0 1
+        ./maxhop.out 2000 512 50 1 1
+        ./maxhop.out 2000 512 50 0 1
+        ./openflow.out 2000 512 50 0 1
 exit 0
