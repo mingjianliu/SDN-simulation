@@ -1,0 +1,34 @@
+In time 0:	3334 flows created	3334 flows accepted	0 flows refused	0 flows deleted	21872 in switches	
+In time 1:	3348 flows created	1447 flows accepted	1901 flows refused	0 flows deleted	28293 in switches	
+In time 2:	3287 flows created	1309 flows accepted	1978 flows refused	0 flows deleted	33758 in switches	
+In time 3:	3302 flows created	1073 flows accepted	2229 flows refused	0 flows deleted	37656 in switches	
+In time 4:	3375 flows created	842 flows accepted	2533 flows refused	0 flows deleted	40123 in switches	
+In time 5:	3224 flows created	797 flows accepted	2427 flows refused	0 flows deleted	42489 in switches	
+In time 6:	3362 flows created	894 flows accepted	2468 flows refused	0 flows deleted	45094 in switches	
+In time 7:	3291 flows created	826 flows accepted	2465 flows refused	0 flows deleted	47515 in switches	
+In time 8:	3371 flows created	933 flows accepted	2438 flows refused	0 flows deleted	50234 in switches	
+In time 9:	3273 flows created	857 flows accepted	2416 flows refused	0 flows deleted	52755 in switches	
+In time 10:	3366 flows created	837 flows accepted	2529 flows refused	0 flows deleted	55234 in switches	
+In time 11:	3327 flows created	848 flows accepted	2479 flows refused	0 flows deleted	57669 in switches	
+In time 12:	3327 flows created	806 flows accepted	2521 flows refused	0 flows deleted	59985 in switches	
+In time 13:	3375 flows created	833 flows accepted	2542 flows refused	0 flows deleted	62436 in switches	
+In time 14:	3279 flows created	843 flows accepted	2436 flows refused	0 flows deleted	64826 in switches	
+In time 15:	3319 flows created	875 flows accepted	2444 flows refused	0 flows deleted	67328 in switches	
+In time 16:	3329 flows created	855 flows accepted	2474 flows refused	0 flows deleted	69772 in switches	
+In time 17:	3243 flows created	763 flows accepted	2480 flows refused	0 flows deleted	72015 in switches	
+In time 18:	3369 flows created	881 flows accepted	2488 flows refused	0 flows deleted	74565 in switches	
+In time 19:	3328 flows created	863 flows accepted	2465 flows refused	0 flows deleted	77074 in switches	
+In time 20:	3270 flows created	841 flows accepted	2429 flows refused	0 flows deleted	79500 in switches	
+In time 21:	3314 flows created	799 flows accepted	2515 flows refused	0 flows deleted	81793 in switches	
+In time 22:	3310 flows created	841 flows accepted	2469 flows refused	0 flows deleted	84151 in switches	
+In time 23:	3300 flows created	831 flows accepted	2469 flows refused	0 flows deleted	86437 in switches	
+In time 24:	3230 flows created	802 flows accepted	2428 flows refused	0 flows deleted	88649 in switches	
+In time 25:	3351 flows created	776 flows accepted	2575 flows refused	0 flows deleted	90867 in switches	
+In time 26:	3347 flows created	813 flows accepted	2534 flows refused	0 flows deleted	93131 in switches	
+In time 27:	3355 flows created	731 flows accepted	2624 flows refused	0 flows deleted	95145 in switches	
+In time 28:	3298 flows created	728 flows accepted	2570 flows refused	0 flows deleted	97123 in switches	
+In time 29:	2859 flows created	654 flows accepted	2205 flows refused	0 flows deleted	98845 in switches	
+In time 30:	843 flows created	186 flows accepted	657 flows refused	0 flows deleted	99318 in switches	
+In time 31:	94 flows created	27 flows accepted	67 flows refused	0 flows deleted	99379 in switches	
+
+Control message is 99379
