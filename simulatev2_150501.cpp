@@ -86,7 +86,7 @@ auto uni_generation = bind(generation,generator);
 auto uni_dis = bind(uniform_dis,generator);
 
 /* for destination random number generator*/
-uniform_int_distribution<int> dstGeneration(1,50);
+uniform_int_distribution<int> dstGeneration(1,20);
 uniform_int_distribution<int> durationGeneration(1,DURATION);
 auto uniRandn = bind(dstGeneration, generator);
 auto durationRandn = bind(durationGeneration, generator);
@@ -619,7 +619,7 @@ vector <vector <flows>> Rand_Generation_Multicast(traffic &MultiTraffic, int flo
                     int tempEndTime = durationRandn();
                     currentFlow.src = src;
                     currentFlow.dst = tempDst;
-                    currentFlow.endtime = tempEndTime;
+                    currentFlow.endtime = time + tempEndTime;
                     temp.push_back(currentFlow);
                     ++flow_num;
                 }
@@ -641,8 +641,8 @@ int main(int argc, char **argv) {
     int flownumber = atoi(argv[1]);	  	//
     int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
     int loop_time=atoi(argv[3]);	  	//the density of flow
-    float criteria_generate = 1;
-    float criteria_dest = 0.95;
+    float criteria_generate = 0.5;
+    float criteria_dest = 0.9;
     int schematic=atoi(argv[4]);		//four method choose from input
     traffic MultiTraffic;
     map<int, traffic_node*> traffic_tree;
@@ -679,7 +679,7 @@ int main(int argc, char **argv) {
     cout << "Totally src number is " << traffic_tree.size() << endl ;
     //Handleflow
     vector <vector <flows>> total_flows;
-
+ 
 //-----------------------------generate flows---------------------
     for (int time = 0; time < loop_time; time++) {
         vector <vector <flows>> temp = Rand_Generation_Multicast(MultiTraffic, flownumber, numberofnodes, criteria_generate, criteria_dest);
@@ -707,6 +707,7 @@ int main(int argc, char **argv) {
     cout << "Source number is " << source_number << ", and destination number is " << destination_number << endl;
     int control_message = 0;
     vector <int> deleted_flow(total_flows.size(), 0);
+    cout << "total number of trees are " << total_flows[0].size() << endl;
 // Handle all flows and collect the result
     Switches total_nodes (numberofnodes);
     vector <int> usage = total_nodes.Usage();
