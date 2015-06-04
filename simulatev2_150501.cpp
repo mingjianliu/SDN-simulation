@@ -16,7 +16,7 @@ using namespace std;
 
 #define MAX_NUM  1000
 #define MULTIPLE 3
-#define HOPS   3
+#define HOPS   1
 #define MAX_ENTRY 2000
 #define DURATION 10
 
@@ -86,7 +86,7 @@ auto uni_generation = bind(generation,generator);
 auto uni_dis = bind(uniform_dis,generator);
 
 /* for destination random number generator*/
-uniform_int_distribution<int> dstGeneration(1,20);
+uniform_int_distribution<int> dstGeneration(1,50);
 uniform_int_distribution<int> durationGeneration(1,DURATION);
 auto uniRandn = bind(dstGeneration, generator);
 auto durationRandn = bind(durationGeneration, generator);
@@ -641,7 +641,7 @@ int main(int argc, char **argv) {
     int flownumber = atoi(argv[1]);	  	//
     int numberofnodes=atoi(argv[2]);    	//how many nodes in the network
     int loop_time=atoi(argv[3]);	  	//the density of flow
-    float criteria_generate = 0.5;
+    float criteria_generate = 1;
     float criteria_dest = 0.9;
     int schematic=atoi(argv[4]);		//four method choose from input
     traffic MultiTraffic;
@@ -655,6 +655,7 @@ int main(int argc, char **argv) {
     methodName[1]="Jump_Flow_";
     methodName[2]="Load_Balance_";
     methodName[3]="Alpha_beta_";
+    if (HOPS == 1 ) methodName[0] = "Openflow";
     string total_flow = itos(flownumber * loop_time);
     vector<vector< vector< int >>> Pathcost(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
     vector<vector< vector< int >>> PathLength(1, vector< vector<int>>(numberofnodes, vector< int >(numberofnodes, 0)));
@@ -713,6 +714,7 @@ int main(int argc, char **argv) {
     vector <int> usage = total_nodes.Usage();
     int temp_time = 0;
     int destinations = 0;
+    int group_accepted = 0;
     for ( auto each_time : total_flows ) {
         int temp_dest = 0;
         for (auto each_flow : each_time) {
@@ -734,8 +736,9 @@ int main(int argc, char **argv) {
             total_nodes.Destroy(temp_time);
             usage = total_nodes.Usage();
         }
+        group_accepted += cur_flow - refused;
         int total_aft = total_nodes.Total_Usage();
-        fout << "In time " << temp_time << ":\t" << cur_flow << " flows created\t" << cur_flow - refused << " flows accepted\t" << refused << " flows refused\t" << deleted_flow[temp_time] << " flows deleted\t" << total_aft << " in switches\t" << endl;
+        fout << "In time " << temp_time << ":\t" << cur_flow << " flows created\t" << cur_flow - refused << " flows accepted\t" << group_accepted << " group accepted\t" << refused << " flows refused\t" << deleted_flow[temp_time] << " flows deleted\t" << total_aft << " in switches\t" << endl;
         vector<int> statical(11, 0);
         for ( int each_node : usage ) {
             ++statical [each_node / 200];
